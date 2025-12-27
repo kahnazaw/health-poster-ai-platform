@@ -36,7 +36,7 @@ yarn-error.log*
 next-env.d.ts
 
 # prisma
-/prisma/migrations
+# Keep migrations in git for Railway deployment
 
 # Prisma / SQLite
 *.db

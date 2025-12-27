@@ -12,6 +12,11 @@ export const prisma =
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma
+} else {
+  // In production, ensure we don't create multiple instances
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = prisma
+  }
 }
 
 

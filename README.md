@@ -19,7 +19,7 @@
 
 - **Frontend:** Next.js 14 + React + TypeScript
 - **Backend:** Next.js API Routes
-- **Database:** SQLite + Prisma ORM
+- **Database:** PostgreSQL + Prisma ORM
 - **Authentication:** NextAuth.js
 - **Styling:** Tailwind CSS
 - **PDF Generation:** jsPDF + html2canvas
@@ -137,7 +137,7 @@ DELETE /api/users/[id]
 ## ملاحظات مهمة
 
 1. **الأمان:** تأكد من تغيير `NEXTAUTH_SECRET` في ملف `.env.local`
-2. **قاعدة البيانات:** في الإنتاج، استخدم PostgreSQL أو MySQL بدلاً من SQLite
+2. **قاعدة البيانات:** يستخدم PostgreSQL في الإنتاج والتطوير
 3. **توليد المحتوى:** حالياً يستخدم محاكاة بسيطة، يمكن ربطها بـ OpenAI API
 4. **الطباعة:** البوسترات مصممة بحجم A4 عمودي
 
