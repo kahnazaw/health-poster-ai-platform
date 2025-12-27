@@ -50,19 +50,24 @@ export const authOptions: NextAuthOptions = {
             return null
           }
 
-        // Log successful login
-        try {
-          await logUserLogin(user.name, user.role, user.email)
-        } catch (error) {
-          // Don't fail login if logging fails
-          console.error('Failed to log user login:', error)
-        }
+          // Log successful login
+          try {
+            await logUserLogin(user.name, user.role, user.email)
+          } catch (error) {
+            // Don't fail login if logging fails
+            console.error('Failed to log user login:', error)
+          }
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role as 'ADMIN' | 'USER',
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role as 'ADMIN' | 'USER',
+          }
+        } catch (error: any) {
+          console.error('❌ Database error during login:', error.message)
+          // Return null on database errors (don't expose error details)
+          return null
         }
       }
     })
