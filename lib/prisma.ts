@@ -4,8 +4,9 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// Get DATABASE_URL - don't validate during build time
+// Get DATABASE_URL and DIRECT_URL - don't validate during build time
 const databaseUrl = process.env.DATABASE_URL
+const directUrl = process.env.DIRECT_URL // For connection pooling (migrations use this)
 const skipValidation = process.env.SKIP_ENV_VALIDATION === '1'
 
 // Lazy validation: Only check at runtime, not during build
@@ -40,6 +41,7 @@ function validateDatabaseUrl() {
 
 // Create Prisma client - use placeholder during build if DATABASE_URL is not available
 // Validation will happen on first actual database operation via $connect()
+// Connection pooling: url = pooled connection, directUrl = direct connection (for migrations)
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
@@ -48,6 +50,9 @@ export const prisma =
       db: {
         // Use actual URL if available, otherwise placeholder (will be validated at runtime)
         url: databaseUrl || 'postgresql://placeholder:placeholder@localhost:5432/placeholder',
+        // directUrl is used for migrations when connection pooling is enabled
+        // If not set, Prisma will use url for both operations
+        ...(directUrl && { directUrl }),
       },
     },
   })

@@ -2,10 +2,11 @@
 nixPkgs = ["nodejs_18"]
 
 [phases.build]
+env = { SKIP_ENV_VALIDATION = "1" }
 cmds = [
   "npm install",
-  "npx prisma generate",
-  "npm run build"
+  "SKIP_ENV_VALIDATION=1 npx prisma generate",
+  "SKIP_ENV_VALIDATION=1 npm run build"
 ]
 
 [start]
