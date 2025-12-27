@@ -64,6 +64,8 @@ model Poster {
   topic         String
   content       String   // JSON string containing the generated content
   imageUrl      String?
+  qrCodeUrl   String?   // QR code image URL for public access
+  publicId    String?   @unique // Public ID for sharing (different from internal id)
   status        String   @default("DRAFT") // DRAFT, UNDER_REVIEW, APPROVED, REJECTED
   templateId    String?
   template      Template? @relation(fields: [templateId], references: [id], onDelete: SetNull)

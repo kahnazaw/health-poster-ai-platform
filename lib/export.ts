@@ -83,7 +83,7 @@ export async function exportPoster(options: ExportOptions): Promise<void> {
 
     // Social media formats (square, vertical, landscape)
     if (format === 'instagram' || format === 'whatsapp' || format === 'facebook') {
-      const socialCanvas = await createSocialFormat(canvas, format)
+      const socialCanvas = await createSocialFormat(canvas, format as 'instagram' | 'whatsapp' | 'facebook')
       const link = document.createElement('a')
       link.download = `${filename}-${format}.png`
       link.href = socialCanvas.toDataURL('image/png', 1.0)
@@ -91,11 +91,6 @@ export async function exportPoster(options: ExportOptions): Promise<void> {
       onProgress?.(100)
       return
     }
-    const link = document.createElement('a')
-    link.download = `${filename}-${format}.png`
-    link.href = socialCanvas.toDataURL('image/png', 1.0)
-    link.click()
-    onProgress?.(100)
   } catch (error) {
     console.error('Export error:', error)
     throw new Error('فشل التصدير')
