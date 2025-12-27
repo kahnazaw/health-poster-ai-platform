@@ -14,31 +14,33 @@ export async function GET() {
     // Test database connection first
     await prisma.$connect()
     
-    // Count users in PostgreSQL database
+    // CRITICAL: Actually query the PostgreSQL database to count users
     const userCount = await prisma.user.count()
     
     console.log(`📊 Database check: Found ${userCount} users in PostgreSQL`)
 
-    // Always allow setup if table is empty OR in emergency mode
-    const canSetup = userCount === 0 || true // Force true for emergency
+    // CRITICAL: If table is empty (userCount === 0), MUST return canSetup: true
+    // This is the truth - if table is empty, setup is allowed
+    const canSetup = userCount === 0
     
     return NextResponse.json({
       canSetup: canSetup,
       userCount,
       databaseConnected: true,
-      emergencyMode: true, // Force allow setup
+      message: userCount === 0 ? 'Database is empty - setup allowed' : `Found ${userCount} users - setup ${canSetup ? 'allowed' : 'not allowed'}`,
     })
   } catch (error: any) {
     console.error('❌ Error checking setup status:', error.message)
     console.error('Full error:', error)
     
-    // If database connection fails, still allow setup (might be first run)
+    // If database connection fails, allow setup (might be first run or empty DB)
+    // This is safe - if we can't connect, we can't know if users exist
     return NextResponse.json({
-      canSetup: true, // Allow setup on error (might be empty DB)
+      canSetup: true, // Allow setup on error (might be empty DB or connection issue)
       userCount: 0,
       databaseConnected: false,
       error: error.message,
-      emergencyMode: true,
+      message: 'Database connection failed - allowing setup as fallback',
     }, { status: 200 }) // Return 200 so page can still load
   }
 }

@@ -22,13 +22,16 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Generate Prisma Client with musl binary target
-# Note: DATABASE_URL not required for build - only for runtime
+# CRITICAL: Skip environment validation during build - DATABASE_URL not required
 ENV PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x
+ENV SKIP_ENV_VALIDATION=1
+ENV DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
 RUN npx prisma generate
 
 # Build Next.js
-# DATABASE_URL is not required during build - validation happens at runtime
-RUN npm run build
+# CRITICAL: DATABASE_URL is NOT required during build - validation happens at runtime only
+# The placeholder URL above is only for Prisma generate, actual connection happens at runtime
+RUN SKIP_ENV_VALIDATION=1 npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
@@ -72,5 +75,6 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Run migrations and start
+# DATABASE_URL is available at runtime from Railway environment variables
 CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
 

@@ -6,9 +6,15 @@ const globalForPrisma = globalThis as unknown as {
 
 // Get DATABASE_URL - don't validate during build time
 const databaseUrl = process.env.DATABASE_URL
+const skipValidation = process.env.SKIP_ENV_VALIDATION === '1'
 
 // Lazy validation: Only check at runtime, not during build
 function validateDatabaseUrl() {
+  // Skip validation if SKIP_ENV_VALIDATION is set (during build)
+  if (skipValidation) {
+    return
+  }
+
   // Only validate in production runtime (not during build)
   // Check if we're in a server context (not browser) and in production
   const isServerRuntime = typeof window === 'undefined'
@@ -26,7 +32,7 @@ function validateDatabaseUrl() {
   }
 
   // Log database connection info (only at runtime, without exposing password)
-  if (isServerRuntime && databaseUrl) {
+  if (isServerRuntime && databaseUrl && !databaseUrl.includes('placeholder')) {
     const dbInfo = databaseUrl.replace(/:[^:@]+@/, ':****@') // Hide password
     console.log('🔌 Database connection:', dbInfo.includes('postgres') ? 'PostgreSQL ✅' : 'UNKNOWN ⚠️')
   }
