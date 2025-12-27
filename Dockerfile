@@ -23,7 +23,7 @@ COPY . .
 
 # Generate Prisma Client with musl binary target
 # CRITICAL: Skip environment validation during build - DATABASE_URL not required
-ENV PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x
+# Prisma reads binaryTargets from schema.prisma automatically - no env var needed
 ENV SKIP_ENV_VALIDATION=1
 ENV DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
 RUN npx prisma generate
