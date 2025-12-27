@@ -61,12 +61,8 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder /app/package.json ./package.json
 
-# Set environment variables for Prisma
-ENV PRISMA_QUERY_ENGINE_LIBRARY=/app/node_modules/.prisma/client/libquery_engine-linux-musl-openssl-3.0.x.so.node
-ENV PRISMA_QUERY_ENGINE_BINARY=/app/node_modules/.prisma/client/query-engine-linux-musl-openssl-3.0.x
-ENV PRISMA_MIGRATION_ENGINE_BINARY=/app/node_modules/.prisma/client/migration-engine-linux-musl-openssl-3.0.x
-ENV PRISMA_INTROSPECTION_ENGINE_BINARY=/app/node_modules/.prisma/client/introspection-engine-linux-musl-openssl-3.0.x
-ENV PRISMA_FMT_BINARY=/app/node_modules/.prisma/client/prisma-fmt-linux-musl-openssl-3.0.x
+# Prisma will automatically find binaries based on binaryTargets in schema.prisma
+# No need to manually set PRISMA_* environment variables - Prisma handles this automatically
 
 # Verify DATABASE_URL is set (Railway provides this automatically)
 # The app will read DATABASE_URL from environment variables

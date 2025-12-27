@@ -5,6 +5,7 @@ generator client {
   provider        = "prisma-client-js"
   engineType      = "binary"
   binaryTargets   = ["native", "linux-musl-openssl-3.0.x"]
+  // Prisma will automatically find binaries - no manual path configuration needed
 }
 
 datasource db {
