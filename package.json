@@ -16,6 +16,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
+    "sync-db": "node scripts/sync-db.mjs",
     "force-admin": "node scripts/create-admin.mjs"
   },
   "dependencies": {

@@ -22,19 +22,33 @@ export default function SetupPage() {
 
   const checkSetupStatus = async () => {
     try {
-      const res = await fetch('/api/setup/status')
-      const data = await res.json()
+      console.log('🔍 Checking setup status...')
+      const res = await fetch('/api/setup/status', {
+        cache: 'no-store', // Force fresh request
+      })
       
-      // EMERGENCY: Always show setup form
-      if (data.canSetup || data.emergencyMode) {
+      if (!res.ok) {
+        console.warn('⚠️ Setup status API returned error, allowing setup anyway')
         setCanSetup(true)
+        setLoading(false)
+        return
+      }
+      
+      const data = await res.json()
+      console.log('📊 Setup status response:', data)
+      
+      // CRITICAL: Always show setup form in emergency mode or if database is empty
+      if (data.canSetup || data.emergencyMode || data.userCount === 0) {
+        setCanSetup(true)
+        console.log('✅ Setup form will be shown')
       } else {
         // Even if canSetup is false, show form in emergency mode
         setCanSetup(true)
         console.warn('⚠️ EMERGENCY MODE: Showing setup form despite existing users')
       }
-    } catch (err) {
-      // On error, still show form in emergency mode
+    } catch (err: any) {
+      console.error('❌ Error checking setup status:', err.message)
+      // On error, still show form (might be database connection issue)
       setCanSetup(true)
       console.warn('⚠️ EMERGENCY MODE: Showing setup form due to error')
     } finally {

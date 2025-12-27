@@ -36,23 +36,35 @@ export default function LoginPage() {
 
       if (result?.error) {
         setError('البريد الإلكتروني أو كلمة المرور غير صحيحة')
-      } else {
+        setLoading(false) // Stop loading on error
+      } else if (result?.ok) {
         // Get user role from session to redirect appropriately
-        const sessionRes = await fetch('/api/auth/session')
-        const session = await sessionRes.json()
-        const role = session?.user?.role
+        try {
+          const sessionRes = await fetch('/api/auth/session')
+          const session = await sessionRes.json()
+          const role = session?.user?.role
 
-        if (role === 'ADMIN') {
-          router.push('/dashboard/admin')
-        } else {
+          if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+            router.push('/dashboard/admin')
+          } else {
+            router.push('/dashboard/user')
+          }
+          router.refresh()
+        } catch (sessionError) {
+          console.error('Error fetching session:', sessionError)
+          // Still redirect to user dashboard as fallback
           router.push('/dashboard/user')
         }
-        router.refresh()
+        setLoading(false)
+      } else {
+        // No error but not ok - might be loading
+        setError('حدث خطأ أثناء تسجيل الدخول')
+        setLoading(false)
       }
-    } catch (err) {
-      setError('حدث خطأ أثناء تسجيل الدخول')
-    } finally {
-      setLoading(false)
+    } catch (err: any) {
+      console.error('Login error:', err)
+      setError('حدث خطأ أثناء تسجيل الدخول: ' + (err.message || 'خطأ غير معروف'))
+      setLoading(false) // Always stop loading on error
     }
   }
 

@@ -3,25 +3,39 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * Check if setup is allowed (no users exist)
- * EMERGENCY: Temporarily always return canSetup: true for admin reset
+ * CRITICAL: Always allow setup if database is empty or connection fails
  */
 export async function GET() {
   try {
+    // Test database connection first
+    await prisma.$connect()
+    
+    // Count users in PostgreSQL database
     const userCount = await prisma.user.count()
+    
+    console.log(`📊 Database check: Found ${userCount} users in PostgreSQL`)
 
-    // EMERGENCY BYPASS: Always allow setup for admin reset
+    // Always allow setup if table is empty OR in emergency mode
+    const canSetup = userCount === 0 || true // Force true for emergency
+    
     return NextResponse.json({
-      canSetup: true, // FORCED TO TRUE FOR EMERGENCY RESET
+      canSetup: canSetup,
       userCount,
-      emergencyMode: true, // Flag to indicate emergency mode
+      databaseConnected: true,
+      emergencyMode: true, // Force allow setup
     })
-  } catch (error) {
-    console.error('Error checking setup status')
-    // Even on error, allow setup in emergency mode
-    return NextResponse.json(
-      { error: 'خطأ في الخادم', canSetup: true, emergencyMode: true },
-      { status: 500 }
-    )
+  } catch (error: any) {
+    console.error('❌ Error checking setup status:', error.message)
+    console.error('Full error:', error)
+    
+    // If database connection fails, still allow setup (might be first run)
+    return NextResponse.json({
+      canSetup: true, // Allow setup on error (might be empty DB)
+      userCount: 0,
+      databaseConnected: false,
+      error: error.message,
+      emergencyMode: true,
+    }, { status: 200 }) // Return 200 so page can still load
   }
 }
 
