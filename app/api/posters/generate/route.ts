@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { generateHealthPosterContent } from '@/lib/ai'
+import { logPosterGenerated, logPosterGenerationError } from '@/lib/logger'
 
 const generatePosterSchema = z.object({
   topic: z.string().min(1, 'الموضوع مطلوب'),
@@ -100,20 +101,26 @@ function generateHealthContent(topic: string) {
 }
 
 export async function POST(req: NextRequest) {
+  let topic = ''
+  let session: any = null
+  
   try {
-    const session = await getServerSession(authOptions)
+    session = await getServerSession(authOptions)
     
     if (!session) {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     }
 
     const body = await req.json()
-    const { topic, useAI, targetAudience, tone, length } = generatePosterSchema.parse(body)
+    const parsed = generatePosterSchema.parse(body)
+    topic = parsed.topic
+    const { useAI, targetAudience, tone, length } = parsed
 
     // Try AI generation first if requested and available
     let content: { title: string; points: string[]; closing: string }
+    const useAIFlag = useAI || false
     
-    if (useAI) {
+    if (useAIFlag) {
       const aiContent = await generateHealthPosterContent({
         topic,
         targetAudience,
@@ -145,7 +152,7 @@ export async function POST(req: NextRequest) {
         content: JSON.stringify(content),
         userId: (session.user as any).id,
         status: 'DRAFT',
-        aiGenerated: useAI || false,
+        aiGenerated: useAIFlag,
         language: 'ar',
       },
     })
@@ -160,11 +167,40 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    // Log successful poster generation
+    try {
+      await logPosterGenerated(
+        (session.user as any).name || 'Unknown',
+        (session.user as any).role || 'USER',
+        poster.id,
+        topic,
+        useAIFlag
+      )
+    } catch (logError) {
+      // Don't fail the request if logging fails
+      console.error('Failed to log poster generation:', logError)
+    }
+
     return NextResponse.json({
       id: poster.id,
       content: content,
     })
   } catch (error) {
+    // Log error
+    try {
+      if (session) {
+        await logPosterGenerationError(
+          (session.user as any)?.name || 'Unknown',
+          (session.user as any)?.role || 'USER',
+          error instanceof Error ? error.message : 'Unknown error',
+          topic || undefined
+        )
+      }
+    } catch (logError) {
+      // Ignore logging errors
+      console.error('Failed to log error:', logError)
+    }
+
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
     }

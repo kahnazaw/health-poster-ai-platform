@@ -54,6 +54,16 @@ export default function Navbar() {
                   >
                     التحليلات
                   </Link>
+                  <Link
+                    href="/dashboard/admin/logs"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition ${
+                      pathname === '/dashboard/admin/logs'
+                        ? 'bg-primary-100 text-primary-700'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    سجل الأنشطة
+                  </Link>
                   {(role === 'SUPER_ADMIN' || role === 'ADMIN') && (
                     <Link
                       href="/dashboard/admin/organizations"

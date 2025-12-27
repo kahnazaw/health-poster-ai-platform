@@ -3,6 +3,7 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
+import { logUserLogin } from './logger'
 
 if (!process.env.NEXTAUTH_SECRET && !process.env.AUTH_SECRET) {
   console.error('❌ NEXTAUTH_SECRET is missing! Please set it in Railway environment variables.')
@@ -41,6 +42,14 @@ export const authOptions: NextAuthOptions = {
 
         if (!isPasswordValid) {
           return null
+        }
+
+        // Log successful login
+        try {
+          await logUserLogin(user.name, user.role, user.email)
+        } catch (error) {
+          // Don't fail login if logging fails
+          console.error('Failed to log user login:', error)
         }
 
         return {

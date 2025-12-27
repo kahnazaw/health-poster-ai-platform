@@ -108,5 +108,14 @@ model StatusHistory {
   createdAt DateTime @default(now())
 }
 
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String   // e.g., "User Login", "Poster Generated", "Database Error"
+  details   String   // Additional information about the action
+  userName  String   // Name of the user who performed the action
+  userRole  String   // Role of the user (ADMIN, USER, etc.)
+  createdAt DateTime @default(now())
+}
+
 
 
