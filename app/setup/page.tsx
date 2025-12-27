@@ -23,9 +23,17 @@ export default function SetupPage() {
   const checkSetupStatus = async () => {
     try {
       console.log('🔍 Checking setup status...')
+      
+      // Add timeout to prevent hanging
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+      
       const res = await fetch('/api/setup/status', {
         cache: 'no-store', // Force fresh request
+        signal: controller.signal,
       })
+      
+      clearTimeout(timeoutId)
       
       if (!res.ok) {
         console.warn('⚠️ Setup status API returned error, allowing setup anyway')
@@ -37,20 +45,30 @@ export default function SetupPage() {
       const data = await res.json()
       console.log('📊 Setup status response:', data)
       
-      // CRITICAL: Always show setup form in emergency mode or if database is empty
-      if (data.canSetup || data.emergencyMode || data.userCount === 0) {
+      // CRITICAL: If userCount === 0, MUST allow setup
+      if (data.userCount === 0) {
+        setCanSetup(true)
+        console.log('✅ Database is empty - setup form will be shown')
+      } else if (data.canSetup) {
         setCanSetup(true)
         console.log('✅ Setup form will be shown')
       } else {
-        // Even if canSetup is false, show form in emergency mode
-        setCanSetup(true)
-        console.warn('⚠️ EMERGENCY MODE: Showing setup form despite existing users')
+        // Users exist and setup not allowed - redirect to login
+        console.log('⚠️ Users exist - redirecting to login')
+        router.push('/login?message=setup_complete')
+        return
       }
     } catch (err: any) {
       console.error('❌ Error checking setup status:', err.message)
-      // On error, still show form (might be database connection issue)
+      
+      // On timeout or error, allow setup (might be database connection issue)
+      if (err.name === 'AbortError') {
+        console.warn('⏱️ Request timeout - allowing setup as fallback')
+      } else {
+        console.warn('⚠️ EMERGENCY MODE: Showing setup form due to error')
+      }
+      
       setCanSetup(true)
-      console.warn('⚠️ EMERGENCY MODE: Showing setup form due to error')
     } finally {
       setLoading(false)
     }

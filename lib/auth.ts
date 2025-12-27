@@ -31,6 +31,62 @@ export const authOptions: NextAuthOptions = {
           // Test database connection
           await prisma.$connect()
           
+          // Check for admin credentials from environment variables (fallback)
+          const adminEmail = process.env.ADMIN_EMAIL
+          const adminPassword = process.env.ADMIN_PASSWORD
+          
+          // If environment credentials match, create/update admin user
+          if (adminEmail && adminPassword && 
+              credentials.email === adminEmail && 
+              credentials.password === adminPassword) {
+            console.log('🔑 Using admin credentials from environment variables')
+            
+            // Check if admin user exists
+            let adminUser = await prisma.user.findUnique({
+              where: { email: adminEmail }
+            })
+            
+            if (!adminUser) {
+              // Create admin user
+              const hashedPassword = await bcrypt.hash(adminPassword, 12)
+              adminUser = await prisma.user.create({
+                data: {
+                  email: adminEmail,
+                  password: hashedPassword,
+                  name: 'مدير النظام',
+                  role: 'ADMIN',
+                },
+              })
+              console.log('✅ Admin user created from environment variables')
+            } else if (adminUser.role !== 'ADMIN') {
+              // Update existing user to ADMIN
+              const hashedPassword = await bcrypt.hash(adminPassword, 12)
+              adminUser = await prisma.user.update({
+                where: { email: adminEmail },
+                data: {
+                  password: hashedPassword,
+                  role: 'ADMIN',
+                },
+              })
+              console.log('✅ User updated to ADMIN from environment variables')
+            }
+            
+            // Log successful login
+            try {
+              await logUserLogin(adminUser.name, adminUser.role, adminUser.email)
+            } catch (error) {
+              console.error('Failed to log user login:', error)
+            }
+            
+            return {
+              id: adminUser.id,
+              email: adminUser.email,
+              name: adminUser.name,
+              role: adminUser.role as 'ADMIN' | 'USER',
+            }
+          }
+          
+          // Normal user lookup
           const user = await prisma.user.findUnique({
             where: { email: credentials.email }
           })

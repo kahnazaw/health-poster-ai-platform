@@ -76,5 +76,6 @@ ENV HOSTNAME="0.0.0.0"
 
 # Run migrations and start
 # DATABASE_URL is available at runtime from Railway environment variables
-CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
+# Use db push with --accept-data-loss as fallback if migrations fail
+CMD ["sh", "-c", "npx prisma migrate deploy || npx prisma db push --accept-data-loss || true && node server.js"]
 

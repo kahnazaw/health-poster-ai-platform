@@ -25,22 +25,40 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSuccessMessage('')
     setLoading(true)
 
     try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => {
+        controller.abort()
+        setError('انتهت مهلة الاتصال. يرجى المحاولة مرة أخرى.')
+        setLoading(false)
+      }, 15000) // 15 second timeout
+
       const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
       })
 
+      clearTimeout(timeoutId)
+
       if (result?.error) {
         setError('البريد الإلكتروني أو كلمة المرور غير صحيحة')
-        setLoading(false) // Stop loading on error
+        setLoading(false)
       } else if (result?.ok) {
         // Get user role from session to redirect appropriately
         try {
-          const sessionRes = await fetch('/api/auth/session')
+          const sessionRes = await fetch('/api/auth/session', {
+            signal: controller.signal,
+          })
+          
+          if (!sessionRes.ok) {
+            throw new Error('Failed to fetch session')
+          }
+          
           const session = await sessionRes.json()
           const role = session?.user?.role
 
@@ -50,12 +68,13 @@ export default function LoginPage() {
             router.push('/dashboard/user')
           }
           router.refresh()
-        } catch (sessionError) {
+        } catch (sessionError: any) {
           console.error('Error fetching session:', sessionError)
           // Still redirect to user dashboard as fallback
           router.push('/dashboard/user')
+        } finally {
+          setLoading(false)
         }
-        setLoading(false)
       } else {
         // No error but not ok - might be loading
         setError('حدث خطأ أثناء تسجيل الدخول')
@@ -63,8 +82,14 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error('Login error:', err)
-      setError('حدث خطأ أثناء تسجيل الدخول: ' + (err.message || 'خطأ غير معروف'))
-      setLoading(false) // Always stop loading on error
+      
+      if (err.name === 'AbortError') {
+        setError('انتهت مهلة الاتصال. يرجى التحقق من اتصال قاعدة البيانات.')
+      } else {
+        setError('حدث خطأ أثناء تسجيل الدخول: ' + (err.message || 'خطأ غير معروف'))
+      }
+      
+      setLoading(false)
     }
   }
 

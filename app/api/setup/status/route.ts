@@ -11,10 +11,16 @@ export const runtime = 'nodejs'
  */
 export async function GET() {
   try {
-    // Test database connection first
-    await prisma.$connect()
+    // Test database connection first with timeout
+    const connectPromise = prisma.$connect()
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Database connection timeout')), 5000)
+    )
+    
+    await Promise.race([connectPromise, timeoutPromise])
     
     // CRITICAL: Actually query the PostgreSQL database to count users
+    // Use findMany with take: 0 to check if table exists and is empty
     const userCount = await prisma.user.count()
     
     console.log(`📊 Database check: Found ${userCount} users in PostgreSQL`)
@@ -33,7 +39,7 @@ export async function GET() {
     console.error('❌ Error checking setup status:', error.message)
     console.error('Full error:', error)
     
-    // If database connection fails, allow setup (might be first run or empty DB)
+    // If database connection fails or times out, allow setup (might be first run or empty DB)
     // This is safe - if we can't connect, we can't know if users exist
     return NextResponse.json({
       canSetup: true, // Allow setup on error (might be empty DB or connection issue)

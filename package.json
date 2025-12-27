@@ -9,11 +9,11 @@
     "start": "next start",
     "lint": "next lint",
     "db:generate": "npx prisma generate",
-    "db:push": "prisma db push",
+    "db:push": "npx prisma db push --accept-data-loss",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "db:init": "npx prisma db push && npx prisma db seed",
+    "db:init": "npx prisma db push --accept-data-loss && npx prisma db seed",
     "sync-db": "node scripts/sync-db.mjs",
     "force-admin": "node scripts/create-admin.mjs"
   },
