@@ -25,14 +25,18 @@ export default function SetupPage() {
       const res = await fetch('/api/setup/status')
       const data = await res.json()
       
-      if (data.canSetup) {
+      // EMERGENCY: Always show setup form
+      if (data.canSetup || data.emergencyMode) {
         setCanSetup(true)
       } else {
-        // Redirect to login if users already exist
-        router.push('/login?message=setup_complete')
+        // Even if canSetup is false, show form in emergency mode
+        setCanSetup(true)
+        console.warn('⚠️ EMERGENCY MODE: Showing setup form despite existing users')
       }
     } catch (err) {
-      setError('حدث خطأ أثناء التحقق من حالة النظام')
+      // On error, still show form in emergency mode
+      setCanSetup(true)
+      console.warn('⚠️ EMERGENCY MODE: Showing setup form due to error')
     } finally {
       setLoading(false)
     }

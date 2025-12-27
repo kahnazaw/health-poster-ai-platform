@@ -34,15 +34,9 @@ export default withAuth(
     const role = (token as any)?.role
 
     // Handle setup page
+    // EMERGENCY: Temporarily allow access to /setup without restrictions
     if (path === '/setup') {
-      // If user is authenticated, redirect to dashboard
-      if (token) {
-        if (role === 'ADMIN') {
-          return NextResponse.redirect(new URL('/dashboard/admin', req.url))
-        }
-        return NextResponse.redirect(new URL('/dashboard/user', req.url))
-      }
-      // Allow access - the page itself will check and redirect if needed
+      // Allow access to setup page - bypassing all checks for emergency reset
       return NextResponse.next()
     }
 

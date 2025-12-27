@@ -15,14 +15,15 @@ const setupSchema = z.object({
  */
 export async function POST(req: NextRequest) {
   try {
+    // EMERGENCY: Temporarily bypass user count check for admin reset
     // Check if any users already exist
     const userCount = await prisma.user.count()
 
+    // EMERGENCY BYPASS: Allow creating admin even if users exist
+    // This will create a new admin or update existing one
     if (userCount > 0) {
-      return NextResponse.json(
-        { error: 'تم إعداد النظام بالفعل. لا يمكن إنشاء حساب مدير آخر.' },
-        { status: 403 }
-      )
+      console.warn('⚠️ EMERGENCY MODE: Allowing admin creation even though users exist')
+      // Continue instead of returning error
     }
 
     // Validate input
@@ -59,16 +60,34 @@ export async function POST(req: NextRequest) {
     // Hash password securely
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Create admin user in a transaction to ensure atomicity
-    const user = await prisma.$transaction(async (tx) => {
-      // Double-check no users exist (race condition protection)
-      const existingCount = await tx.user.count()
-      if (existingCount > 0) {
-        throw new Error('User already exists')
-      }
+    // EMERGENCY: Create or update admin user
+    // Check if user with this email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email },
+    })
 
-      // Create admin user
-      return await tx.user.create({
+    let user
+    if (existingUser) {
+      // Update existing user to ADMIN with new password
+      console.warn('⚠️ EMERGENCY MODE: Updating existing user to ADMIN')
+      user = await prisma.user.update({
+        where: { email: data.email },
+        data: {
+          password: hashedPassword,
+          name: data.name,
+          role: 'ADMIN',
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          createdAt: true,
+        },
+      })
+    } else {
+      // Create new admin user
+      user = await prisma.user.create({
         data: {
           email: data.email,
           password: hashedPassword,
@@ -83,7 +102,7 @@ export async function POST(req: NextRequest) {
           createdAt: true,
         },
       })
-    })
+    }
 
     // Optionally create default organization
     try {
@@ -118,12 +137,8 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (error instanceof Error && error.message === 'User already exists') {
-      return NextResponse.json(
-        { error: 'تم إعداد النظام بالفعل' },
-        { status: 403 }
-      )
-    }
+    // EMERGENCY: Don't block on "User already exists" error
+    // This is handled in the main logic now
 
     console.error('Error during setup')
     return NextResponse.json(
