@@ -58,10 +58,24 @@ export const prisma =
   })
 
 // Override $connect to validate DATABASE_URL on first connection attempt
+// Add error handling to prevent app crash on slow connections
 const originalConnect = prisma.$connect.bind(prisma)
 prisma.$connect = async function() {
-  validateDatabaseUrl()
-  return originalConnect()
+  try {
+    validateDatabaseUrl()
+    // Add timeout for connection attempts (30 seconds)
+    const connectPromise = originalConnect()
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Database connection timeout after 30s')), 30000)
+    )
+    return await Promise.race([connectPromise, timeoutPromise])
+  } catch (error: any) {
+    // Log error but don't crash the app - allow retry on next request
+    console.error('⚠️ Database connection error:', error.message)
+    console.error('⚠️ App will continue, but database operations may fail')
+    // Re-throw to let the caller handle it
+    throw error
+  }
 }
 
 if (process.env.NODE_ENV !== 'production') {
