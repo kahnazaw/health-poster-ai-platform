@@ -10,6 +10,7 @@ export interface AIGenerationOptions {
   targetAudience?: string
   tone?: 'formal' | 'friendly'
   length?: 'short' | 'medium' | 'long'
+  language?: 'ar' | 'ku' | 'tr' | 'en'
 }
 
 export interface AIGeneratedContent {
@@ -17,6 +18,13 @@ export interface AIGeneratedContent {
   mainMessage: string
   bulletPoints: string[]
   closing: string
+}
+
+export interface AIContentTransformOptions {
+  content: string
+  operation: 'simplify' | 'summarize' | 'bulletPoints' | 'socialCaption' | 'faq'
+  language?: 'ar' | 'ku' | 'tr' | 'en'
+  maxLength?: number
 }
 
 /**

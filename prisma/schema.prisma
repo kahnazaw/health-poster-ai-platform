@@ -16,22 +16,93 @@ model User {
   email     String   @unique
   password  String
   name      String
-  role      String   @default("USER")
+  role      String   @default("USER") // SUPER_ADMIN, ADMIN, CONTENT_MANAGER, REVIEWER, USER
+  organizationId String?
+  organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   posters   Poster[]
+  reviewedPosters Poster[] @relation("Reviewer")
+  reviews   Review[] @relation("Reviewer")
+  createdTemplates Template[] @relation("TemplateCreator")
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+  templates   Template[]
+}
+
+model Template {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  topic         String
+  category      String   // e.g., diabetes, smoking, nutrition
+  targetAudience String?
+  content       String   // JSON string containing template content
+  version       Int      @default(1)
+  isActive      Boolean  @default(true)
+  isPublic      Boolean  @default(false) // Shared across organizations
+  organizationId String?
+  organization  Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  createdById   String
+  createdBy     User     @relation("TemplateCreator", fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  posters       Poster[]
 }
 
 model Poster {
-  id          String   @id @default(cuid())
-  title       String
-  topic       String
-  content     String   // JSON string containing the generated content
-  imageUrl    String?
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  title         String
+  topic         String
+  content       String   // JSON string containing the generated content
+  imageUrl      String?
+  status        String   @default("DRAFT") // DRAFT, UNDER_REVIEW, APPROVED, REJECTED
+  templateId    String?
+  template      Template? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewerId    String?
+  reviewer      User?    @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  approvedAt    DateTime?
+  rejectedAt    DateTime?
+  rejectionReason String?
+  downloadCount Int      @default(0)
+  printCount    Int      @default(0)
+  aiGenerated   Boolean  @default(false)
+  language      String   @default("ar") // ar, ku, tr, en
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  reviews       Review[]
+  statusHistory StatusHistory[]
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  posterId  String
+  poster    Poster   @relation(fields: [posterId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer  User     @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  comment   String
+  status    String   // APPROVED, REJECTED, REQUEST_CHANGES
+  createdAt DateTime @default(now())
+}
+
+model StatusHistory {
+  id        String   @id @default(cuid())
+  posterId  String
+  poster    Poster   @relation(fields: [posterId], references: [id], onDelete: Cascade)
+  status    String
+  changedBy String
+  comment   String?
+  createdAt DateTime @default(now())
 }
 
 

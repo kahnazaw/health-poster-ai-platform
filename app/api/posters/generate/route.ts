@@ -144,6 +144,19 @@ export async function POST(req: NextRequest) {
         topic: topic,
         content: JSON.stringify(content),
         userId: (session.user as any).id,
+        status: 'DRAFT',
+        aiGenerated: useAI || false,
+        language: 'ar',
+      },
+    })
+
+    // Create initial status history
+    await prisma.statusHistory.create({
+      data: {
+        posterId: poster.id,
+        status: 'DRAFT',
+        changedBy: (session.user as any).id,
+        comment: 'تم إنشاء البوستر',
       },
     })
 
