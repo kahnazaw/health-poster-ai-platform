@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "منصة مؤسسية رسمية لتوليد بوسترات التوعية الصحية بالذكاء الاصطناعي",
   "private": true,
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
