@@ -302,6 +302,52 @@ Value: (Generate using openssl rand -base64 32)
 - **Solution:** Ensure `DATABASE_URL` is set to internal URL (`.railway.internal`)
 - **Check:** Most operations should use `DATABASE_URL`, not `DIRECT_URL`
 
+### Error: 502 Bad Gateway / Application failed to respond
+
+**This is a critical error that means your app isn't starting properly.**
+
+**Immediate Steps:**
+1. **Check Deploy Logs:**
+   - Go to Railway Dashboard → Your Service → **"Deploy Logs"** or **"Logs"** tab
+   - Look for error messages during startup
+   - Check if the app is listening on the correct port
+
+2. **Verify PORT Variable:**
+   - Railway automatically sets `PORT` environment variable
+   - Your app should use `process.env.PORT || 3000`
+   - **Check:** Next.js automatically uses `PORT`, but verify in logs
+   - **Fix:** If PORT is not set, add it manually in Railway Variables (though Railway usually handles this)
+
+3. **Common Causes:**
+   - App crashed during startup (check logs for errors)
+   - Database connection timeout (app waiting for DB)
+   - Port mismatch (app not listening on Railway's assigned port)
+   - Missing environment variables causing startup failure
+
+4. **Check Startup Command:**
+   - Verify `nixpacks.toml` start command is correct
+   - Should be: `npx prisma migrate deploy && npm run start`
+   - Check if migrations are blocking startup
+
+5. **Database Connection Issues:**
+   - If database connection is slow, the app might timeout
+   - Check `DATABASE_URL` is correct
+   - Verify PostgreSQL service is running
+   - The app now has timeout protection (30 seconds) to prevent crashes
+
+6. **What to Look For in Logs:**
+   ```
+   ✅ Good: "Ready on http://0.0.0.0:PORT"
+   ❌ Bad: "Error: listen EADDRINUSE" (port conflict)
+   ❌ Bad: "Database connection timeout" (DB issue)
+   ❌ Bad: "Missing environment variable" (config issue)
+   ```
+
+**Quick Fixes:**
+- If PORT issue: Railway sets it automatically, but you can manually set `PORT=3000` in Variables
+- If database timeout: Check `DATABASE_URL` and ensure PostgreSQL is running
+- If app crashes: Check logs for the specific error message
+
 ---
 
 ## Cost Optimization Tips
@@ -616,6 +662,52 @@ openssl rand -base64 32
 - **السبب:** استخدام رابط Public TCP Proxy بكثرة
 - **الحل:** تأكد من أن `DATABASE_URL` مضبوط على الرابط الداخلي (`.railway.internal`)
 - **تحقق:** معظم العمليات يجب أن تستخدم `DATABASE_URL`، وليس `DIRECT_URL`
+
+### خطأ: 502 Bad Gateway / Application failed to respond
+
+**هذا خطأ حرج يعني أن تطبيقك لا يبدأ بشكل صحيح.**
+
+**خطوات فورية:**
+1. **تحقق من سجلات النشر:**
+   - اذهب إلى لوحة تحكم Railway → خدمتك → تبويب **"Deploy Logs"** أو **"Logs"**
+   - ابحث عن رسائل الخطأ أثناء البدء
+   - تحقق من أن التطبيق يستمع على المنفذ الصحيح
+
+2. **تحقق من متغير PORT:**
+   - Railway يضبط متغير `PORT` تلقائياً
+   - تطبيقك يجب أن يستخدم `process.env.PORT || 3000`
+   - **تحقق:** Next.js يستخدم `PORT` تلقائياً، لكن تحقق في السجلات
+   - **الحل:** إذا لم يكن PORT مضبوطاً، أضفه يدوياً في متغيرات Railway (لكن Railway عادة يتعامل معه)
+
+3. **أسباب شائعة:**
+   - التطبيق تعطل أثناء البدء (تحقق من السجلات للأخطاء)
+   - انتهت مهلة الاتصال بقاعدة البيانات (التطبيق ينتظر قاعدة البيانات)
+   - عدم تطابق المنفذ (التطبيق لا يستمع على المنفذ المعين من Railway)
+   - متغيرات بيئة مفقودة تسبب فشل البدء
+
+4. **تحقق من أمر البدء:**
+   - تحقق من أن أمر البدء في `nixpacks.toml` صحيح
+   - يجب أن يكون: `npx prisma migrate deploy && npm run start`
+   - تحقق من أن الهجرات لا تمنع البدء
+
+5. **مشاكل الاتصال بقاعدة البيانات:**
+   - إذا كان الاتصال بقاعدة البيانات بطيئاً، قد ينتهي الوقت
+   - تحقق من أن `DATABASE_URL` صحيح
+   - تحقق من أن خدمة PostgreSQL تعمل
+   - التطبيق الآن لديه حماية من انتهاء الوقت (30 ثانية) لمنع التعطل
+
+6. **ما تبحث عنه في السجلات:**
+   ```
+   ✅ جيد: "Ready on http://0.0.0.0:PORT"
+   ❌ سيء: "Error: listen EADDRINUSE" (تعارض منفذ)
+   ❌ سيء: "Database connection timeout" (مشكلة قاعدة بيانات)
+   ❌ سيء: "Missing environment variable" (مشكلة إعدادات)
+   ```
+
+**إصلاحات سريعة:**
+- إذا كانت مشكلة PORT: Railway يضبطه تلقائياً، لكن يمكنك ضبط `PORT=3000` يدوياً في Variables
+- إذا انتهت مهلة قاعدة البيانات: تحقق من `DATABASE_URL` وتأكد من أن PostgreSQL يعمل
+- إذا تعطل التطبيق: تحقق من السجلات لرسالة الخطأ المحددة
 
 ---
 
