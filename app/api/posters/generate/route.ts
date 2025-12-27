@@ -3,9 +3,14 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { generateHealthPosterContent } from '@/lib/ai'
 
 const generatePosterSchema = z.object({
   topic: z.string().min(1, 'الموضوع مطلوب'),
+  useAI: z.boolean().optional().default(false),
+  targetAudience: z.string().optional(),
+  tone: z.enum(['formal', 'friendly']).optional().default('formal'),
+  length: z.enum(['short', 'medium', 'long']).optional().default('medium'),
 })
 
 // محاكاة توليد النص (يمكن استبدالها بـ OpenAI API)
@@ -103,10 +108,34 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { topic } = generatePosterSchema.parse(body)
+    const { topic, useAI, targetAudience, tone, length } = generatePosterSchema.parse(body)
 
-    // توليد المحتوى
-    const content = generateHealthContent(topic)
+    // Try AI generation first if requested and available
+    let content: { title: string; points: string[]; closing: string }
+    
+    if (useAI) {
+      const aiContent = await generateHealthPosterContent({
+        topic,
+        targetAudience,
+        tone,
+        length,
+      })
+
+      if (aiContent) {
+        // Use AI-generated content
+        content = {
+          title: aiContent.title,
+          points: aiContent.bulletPoints,
+          closing: aiContent.closing,
+        }
+      } else {
+        // Fallback to template-based generation
+        content = generateHealthContent(topic)
+      }
+    } else {
+      // Use template-based generation
+      content = generateHealthContent(topic)
+    }
 
     // حفظ البوستر في قاعدة البيانات
     const poster = await prisma.poster.create({

@@ -15,6 +15,10 @@ interface PosterGeneratorProps {
 
 export default function PosterGenerator({ onPosterCreated }: PosterGeneratorProps = {}) {
   const [topic, setTopic] = useState('')
+  const [useAI, setUseAI] = useState(false)
+  const [targetAudience, setTargetAudience] = useState('عامة')
+  const [tone, setTone] = useState<'formal' | 'friendly'>('formal')
+  const [length, setLength] = useState<'short' | 'medium' | 'long'>('medium')
   const [loading, setLoading] = useState(false)
   const [content, setContent] = useState<PosterContent | null>(null)
   const [error, setError] = useState('')
@@ -35,7 +39,13 @@ export default function PosterGenerator({ onPosterCreated }: PosterGeneratorProp
       const res = await fetch('/api/posters/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: topic.trim() }),
+        body: JSON.stringify({ 
+          topic: topic.trim(),
+          useAI,
+          targetAudience: useAI ? targetAudience : undefined,
+          tone: useAI ? tone : undefined,
+          length: useAI ? length : undefined,
+        }),
       })
 
       if (res.ok) {
@@ -120,8 +130,8 @@ export default function PosterGenerator({ onPosterCreated }: PosterGeneratorProp
       <div className="bg-white rounded-lg shadow-md p-6">
         <form onSubmit={handleGenerate} className="space-y-4">
           <div>
-            <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-2">
-              موضوع التوعية الصحية
+            <label htmlFor="topic" className="block text-sm font-semibold text-gray-700 mb-2">
+              موضوع التوعية الصحية *
             </label>
             <input
               id="topic"
@@ -129,22 +139,100 @@ export default function PosterGenerator({ onPosterCreated }: PosterGeneratorProp
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="مثال: نظافة الأسنان، التغذية الصحية، الرياضة..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
+              required
             />
           </div>
 
+          {/* AI Generation Options */}
+          <div className="border-t border-gray-200 pt-4">
+            <div className="flex items-center space-x-3 space-x-reverse mb-4">
+              <input
+                type="checkbox"
+                id="useAI"
+                checked={useAI}
+                onChange={(e) => setUseAI(e.target.checked)}
+                className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              />
+              <label htmlFor="useAI" className="text-sm font-medium text-gray-700 cursor-pointer">
+                استخدام الذكاء الاصطناعي لتوليد المحتوى
+              </label>
+            </div>
+
+            {useAI && (
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 space-y-4">
+                <div>
+                  <label htmlFor="targetAudience" className="block text-sm font-medium text-gray-700 mb-2">
+                    الجمهور المستهدف
+                  </label>
+                  <input
+                    id="targetAudience"
+                    type="text"
+                    value={targetAudience}
+                    onChange={(e) => setTargetAudience(e.target.value)}
+                    placeholder="مثال: عامة، الأطفال، كبار السن..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="tone" className="block text-sm font-medium text-gray-700 mb-2">
+                      الأسلوب
+                    </label>
+                    <select
+                      id="tone"
+                      value={tone}
+                      onChange={(e) => setTone(e.target.value as 'formal' | 'friendly')}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    >
+                      <option value="formal">رسمي</option>
+                      <option value="friendly">ودود</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="length" className="block text-sm font-medium text-gray-700 mb-2">
+                      الطول
+                    </label>
+                    <select
+                      id="length"
+                      value={length}
+                      onChange={(e) => setLength(e.target.value as 'short' | 'medium' | 'long')}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    >
+                      <option value="short">مختصر (3 نقاط)</option>
+                      <option value="medium">متوسط (4 نقاط)</option>
+                      <option value="long">مفصل (5 نقاط)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading || !topic.trim()}
+            className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
           >
-            {loading ? 'جاري التوليد...' : 'توليد البوستر'}
+            {loading ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {useAI ? 'جاري توليد المحتوى بالذكاء الاصطناعي...' : 'جاري التوليد...'}
+              </span>
+            ) : (
+              useAI ? 'توليد بالذكاء الاصطناعي' : 'توليد البوستر'
+            )}
           </button>
         </form>
       </div>
