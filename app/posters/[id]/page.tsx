@@ -5,12 +5,14 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { useReactToPrint } from 'react-to-print'
 import Navbar from '@/components/Navbar'
+import ExportModal from '@/components/ExportModal'
 
 interface Poster {
   id: string
   title: string
   topic: string
   content: string
+  status: string
   createdAt: string
 }
 
@@ -21,6 +23,7 @@ export default function PosterViewPage() {
   const [poster, setPoster] = useState<Poster | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showExportModal, setShowExportModal] = useState(false)
   const posterRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -160,7 +163,13 @@ export default function PosterViewPage() {
               الموضوع: {poster.topic}
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition"
+            >
+              تصدير متعدد القنوات
+            </button>
             <button
               onClick={handleDownloadImage}
               className="px-4 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-lg font-medium transition"
@@ -175,7 +184,7 @@ export default function PosterViewPage() {
             </button>
             <button
               onClick={handlePrint}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition"
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition"
             >
               طباعة
             </button>
@@ -241,6 +250,19 @@ export default function PosterViewPage() {
           </div>
         </div>
       </div>
+
+      {/* Export Modal */}
+      {poster && (
+        <ExportModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          posterId={poster.id}
+          posterTitle={poster.title}
+          posterElement={posterRef.current}
+          posterStatus={poster.status}
+          userRole={(session?.user as any)?.role || 'USER'}
+        />
+      )}
     </div>
   )
 }

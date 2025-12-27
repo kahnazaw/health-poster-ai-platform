@@ -33,16 +33,40 @@ export default function Navbar() {
                 إنشاء بوستر
               </Link>
               {isAdmin ? (
-                <Link
-                  href="/dashboard/admin"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition ${
-                    pathname === '/dashboard/admin'
-                      ? 'bg-primary-100 text-primary-700'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  لوحة التحكم
-                </Link>
+                <>
+                  <Link
+                    href="/dashboard/admin"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition ${
+                      pathname === '/dashboard/admin'
+                        ? 'bg-primary-100 text-primary-700'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    لوحة التحكم
+                  </Link>
+                  <Link
+                    href="/dashboard/admin/analytics"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition ${
+                      pathname === '/dashboard/admin/analytics'
+                        ? 'bg-primary-100 text-primary-700'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    التحليلات
+                  </Link>
+                  {(role === 'SUPER_ADMIN' || role === 'ADMIN') && (
+                    <Link
+                      href="/dashboard/admin/organizations"
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition ${
+                        pathname === '/dashboard/admin/organizations'
+                          ? 'bg-primary-100 text-primary-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      المنظمات
+                    </Link>
+                  )}
+                </>
               ) : (
                 <Link
                   href="/dashboard/user"
