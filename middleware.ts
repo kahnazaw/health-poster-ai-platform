@@ -1,11 +1,50 @@
 import { withAuth } from 'next-auth/middleware'
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+// Simple middleware wrapper to check setup status
+async function checkSetupAndRedirect(req: NextRequest) {
+  if (req.nextUrl.pathname === '/setup') {
+    try {
+      // Check if users exist by calling our API
+      const baseUrl = req.nextUrl.origin
+      const statusRes = await fetch(`${baseUrl}/api/setup/status`, {
+        cache: 'no-store',
+      })
+      
+      if (statusRes.ok) {
+        const data = await statusRes.json()
+        if (!data.canSetup) {
+          // Users exist, redirect to login
+          return NextResponse.redirect(new URL('/login', req.url))
+        }
+      }
+    } catch (error) {
+      // On error, allow access (safer for first-time setup)
+      console.error('Error checking setup status:', error)
+    }
+  }
+  return null
+}
 
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token
     const path = req.nextUrl.pathname
     const role = (token as any)?.role
+
+    // Handle setup page
+    if (path === '/setup') {
+      // If user is authenticated, redirect to dashboard
+      if (token) {
+        if (role === 'ADMIN') {
+          return NextResponse.redirect(new URL('/dashboard/admin', req.url))
+        }
+        return NextResponse.redirect(new URL('/dashboard/user', req.url))
+      }
+      // Allow access - the page itself will check and redirect if needed
+      return NextResponse.next()
+    }
 
     // Allow access to login page without auth
     if (path === '/login') {
@@ -27,7 +66,7 @@ export default withAuth(
 
       // Admin routes - ADMIN only
       if (path.startsWith('/dashboard/admin')) {
-        if (role !== 'ADMIN') {
+        if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
           return NextResponse.redirect(new URL('/dashboard/user', req.url))
         }
       }
@@ -35,7 +74,7 @@ export default withAuth(
       // User routes - authenticated USER or ADMIN
       if (path.startsWith('/dashboard/user')) {
         // Both USER and ADMIN can access
-        if (!role || (role !== 'USER' && role !== 'ADMIN')) {
+        if (!role || (role !== 'USER' && role !== 'ADMIN' && role !== 'SUPER_ADMIN')) {
           return NextResponse.redirect(new URL('/login', req.url))
         }
       }
@@ -54,7 +93,8 @@ export default withAuth(
     callbacks: {
       authorized: ({ token, req }) => {
         const path = req.nextUrl.pathname
-        if (path === '/login') return true
+        // Allow login and setup pages without auth
+        if (path === '/login' || path === '/setup') return true
         return !!token
       },
     },
@@ -62,6 +102,5 @@ export default withAuth(
 )
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/posters/:path*'],
+  matcher: ['/dashboard/:path*', '/login', '/setup', '/posters/:path*'],
 }
-
