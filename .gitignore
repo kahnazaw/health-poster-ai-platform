@@ -38,6 +38,10 @@ next-env.d.ts
 # prisma
 /prisma/migrations
 
+# Prisma / SQLite
+*.db
+*.db-journal
+
 
 
 
