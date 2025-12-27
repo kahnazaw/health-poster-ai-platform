@@ -3,6 +3,14 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
 
+if (!process.env.NEXTAUTH_SECRET && !process.env.AUTH_SECRET) {
+  console.error('❌ NEXTAUTH_SECRET is missing! Please set it in Railway environment variables.')
+}
+
+if (!process.env.NEXTAUTH_URL) {
+  console.warn('⚠️ NEXTAUTH_URL is missing! NextAuth may not work correctly.')
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
