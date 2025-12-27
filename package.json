@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx next build",
+    "build": "SKIP_ENV_VALIDATION=1 npx prisma generate && SKIP_ENV_VALIDATION=1 npx next build",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "SKIP_ENV_VALIDATION=1 npx prisma generate",
