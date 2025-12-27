@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(users)
   } catch (error) {
+    console.error('Error fetching users')
     return NextResponse.json({ error: 'خطأ في الخادم' }, { status: 500 })
   }
 }
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'بيانات غير صحيحة' }, { status: 400 })
     }
+    console.error('Error creating user')
     return NextResponse.json({ error: 'خطأ في الخادم' }, { status: 500 })
   }
 }

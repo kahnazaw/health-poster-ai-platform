@@ -35,6 +35,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'تم حذف المستخدم بنجاح' })
   } catch (error) {
+    console.error('Error deleting user')
     return NextResponse.json({ error: 'خطأ في الخادم' }, { status: 500 })
   }
 }
@@ -78,6 +79,7 @@ export async function PATCH(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'بيانات غير صحيحة' }, { status: 400 })
     }
+    console.error('Error updating user')
     return NextResponse.json({ error: 'خطأ في الخادم' }, { status: 500 })
   }
 }

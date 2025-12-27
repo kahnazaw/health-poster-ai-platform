@@ -1,52 +1,50 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter, useParams } from 'next/navigation'
 import { useReactToPrint } from 'react-to-print'
+import Navbar from '@/components/Navbar'
 
-interface PosterContent {
+interface Poster {
+  id: string
   title: string
-  points: string[]
-  closing: string
+  topic: string
+  content: string
+  createdAt: string
 }
 
-interface PosterGeneratorProps {
-  onPosterCreated?: () => void
-}
-
-export default function PosterGenerator({ onPosterCreated }: PosterGeneratorProps = {}) {
-  const [topic, setTopic] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [content, setContent] = useState<PosterContent | null>(null)
+export default function PosterViewPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const params = useParams()
+  const [poster, setPoster] = useState<Poster | null>(null)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const posterRef = useRef<HTMLDivElement>(null)
 
-  const handleGenerate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!topic.trim()) {
-      setError('الرجاء إدخال موضوع التوعية الصحية')
+  useEffect(() => {
+    if (status === 'loading') return
+
+    if (!session) {
+      router.push('/login')
       return
     }
 
-    setLoading(true)
-    setError('')
-    setContent(null)
+    fetchPoster()
+  }, [session, status, router, params.id])
 
+  const fetchPoster = async () => {
     try {
-      const res = await fetch('/api/posters/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: topic.trim() }),
-      })
-
+      setLoading(true)
+      const res = await fetch(`/api/posters/${params.id}`)
+      
       if (res.ok) {
         const data = await res.json()
-        setContent(data.content)
-        if (onPosterCreated) {
-          onPosterCreated()
-        }
+        setPoster(data)
       } else {
         const errorData = await res.json()
-        setError(errorData.error || 'حدث خطأ أثناء توليد البوستر')
+        setError(errorData.error || 'حدث خطأ أثناء تحميل البوستر')
       }
     } catch (err) {
       setError('حدث خطأ أثناء الاتصال بالخادم')
@@ -57,7 +55,7 @@ export default function PosterGenerator({ onPosterCreated }: PosterGeneratorProp
 
   const handlePrint = useReactToPrint({
     content: () => posterRef.current,
-    documentTitle: content?.title || 'بوستر توعية صحية',
+    documentTitle: poster?.title || 'بوستر توعية صحية',
   })
 
   const handleDownloadImage = async () => {
@@ -69,10 +67,11 @@ export default function PosterGenerator({ onPosterCreated }: PosterGeneratorProp
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
+        logging: false,
       })
 
       const link = document.createElement('a')
-      link.download = `${content?.title || 'poster'}.png`
+      link.download = `${poster?.title || 'poster'}.png`
       link.href = canvas.toDataURL('image/png')
       link.click()
     } catch (err) {
@@ -91,6 +90,7 @@ export default function PosterGenerator({ onPosterCreated }: PosterGeneratorProp
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
+        logging: false,
       })
 
       const imgData = canvas.toDataURL('image/png')
@@ -109,49 +109,58 @@ export default function PosterGenerator({ onPosterCreated }: PosterGeneratorProp
       const imgY = 0
 
       pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio)
-      pdf.save(`${content?.title || 'poster'}.pdf`)
+      pdf.save(`${poster?.title || 'poster'}.pdf`)
     } catch (err) {
       alert('حدث خطأ أثناء تحميل PDF')
     }
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <form onSubmit={handleGenerate} className="space-y-4">
-          <div>
-            <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-2">
-              موضوع التوعية الصحية
-            </label>
-            <input
-              id="topic"
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="مثال: نظافة الأسنان، التغذية الصحية، الرياضة..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'جاري التوليد...' : 'توليد البوستر'}
-          </button>
-        </form>
+  if (loading || status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg text-gray-600">جاري التحميل...</div>
       </div>
+    )
+  }
 
-      {content && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="mb-4 flex flex-wrap gap-3">
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!poster) {
+    return null
+  }
+
+  let content: any = {}
+  try {
+    content = JSON.parse(poster.content)
+  } catch {
+    content = { title: poster.title, points: [], closing: '' }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {poster.title}
+            </h1>
+            <p className="text-gray-600">
+              الموضوع: {poster.topic}
+            </p>
+          </div>
+          <div className="flex gap-3">
             <button
               onClick={handleDownloadImage}
               className="px-4 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-lg font-medium transition"
@@ -171,7 +180,9 @@ export default function PosterGenerator({ onPosterCreated }: PosterGeneratorProp
               طباعة
             </button>
           </div>
+        </div>
 
+        <div className="bg-white rounded-lg shadow-md p-6">
           <div
             ref={posterRef}
             className="bg-white border-2 border-gray-200 rounded-lg p-8 mx-auto"
@@ -184,30 +195,38 @@ export default function PosterGenerator({ onPosterCreated }: PosterGeneratorProp
             {/* Header */}
             <div className="text-center mb-8 pb-6 border-b-2 border-primary-200">
               <h1 className="text-4xl font-bold text-primary-700 mb-2">
-                {content.title}
+                {content.title || poster.title}
               </h1>
             </div>
 
             {/* Content */}
             <div className="space-y-6 mb-8">
-              <ul className="space-y-4 list-none">
-                {content.points.map((point, index) => (
-                  <li key={index} className="flex items-start space-x-3 space-x-reverse">
-                    <span className="flex-shrink-0 w-8 h-8 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center font-bold mt-1">
-                      {index + 1}
-                    </span>
-                    <p className="text-lg text-gray-800 leading-relaxed flex-1">
-                      {point}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+              {content.points && content.points.length > 0 ? (
+                <ul className="space-y-4 list-none">
+                  {content.points.map((point: string, index: number) => (
+                    <li key={index} className="flex items-start space-x-3 space-x-reverse">
+                      <span className="flex-shrink-0 w-8 h-8 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center font-bold mt-1">
+                        {index + 1}
+                      </span>
+                      <p className="text-lg text-gray-800 leading-relaxed flex-1">
+                        {point}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-lg text-gray-800 leading-relaxed">
+                  {content.message || 'لا يوجد محتوى'}
+                </div>
+              )}
 
-              <div className="bg-medical-50 border-r-4 border-medical-500 p-4 rounded-lg mt-8">
-                <p className="text-lg text-gray-800 font-medium">
-                  {content.closing}
-                </p>
-              </div>
+              {content.closing && (
+                <div className="bg-medical-50 border-r-4 border-medical-500 p-4 rounded-lg mt-8">
+                  <p className="text-lg text-gray-800 font-medium">
+                    {content.closing}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Footer */}
@@ -221,7 +240,7 @@ export default function PosterGenerator({ onPosterCreated }: PosterGeneratorProp
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }

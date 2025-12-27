@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(posters)
   } catch (error) {
+    console.error('Error fetching posters')
     return NextResponse.json({ error: 'خطأ في الخادم' }, { status: 500 })
   }
 }

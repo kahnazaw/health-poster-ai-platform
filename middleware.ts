@@ -5,11 +5,16 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token
     const path = req.nextUrl.pathname
+    const role = (token as any)?.role
 
     // Allow access to login page without auth
     if (path === '/login') {
       if (token) {
-        return NextResponse.redirect(new URL('/', req.url))
+        // Redirect authenticated users to their dashboard
+        if (role === 'ADMIN') {
+          return NextResponse.redirect(new URL('/dashboard/admin', req.url))
+        }
+        return NextResponse.redirect(new URL('/dashboard/user', req.url))
       }
       return NextResponse.next()
     }
@@ -20,15 +25,23 @@ export default withAuth(
         return NextResponse.redirect(new URL('/login', req.url))
       }
 
-      // Admin routes
+      // Admin routes - ADMIN only
       if (path.startsWith('/dashboard/admin')) {
-        if ((token as any).role !== 'ADMIN') {
+        if (role !== 'ADMIN') {
           return NextResponse.redirect(new URL('/dashboard/user', req.url))
+        }
+      }
+
+      // User routes - authenticated USER or ADMIN
+      if (path.startsWith('/dashboard/user')) {
+        // Both USER and ADMIN can access
+        if (!role || (role !== 'USER' && role !== 'ADMIN')) {
+          return NextResponse.redirect(new URL('/login', req.url))
         }
       }
     }
 
-    // Protect poster routes
+    // Protect poster routes - authenticated users only
     if (path.startsWith('/posters')) {
       if (!token) {
         return NextResponse.redirect(new URL('/login', req.url))

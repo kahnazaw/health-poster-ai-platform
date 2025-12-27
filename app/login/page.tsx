@@ -26,7 +26,16 @@ export default function LoginPage() {
       if (result?.error) {
         setError('البريد الإلكتروني أو كلمة المرور غير صحيحة')
       } else {
-        router.push('/')
+        // Get user role from session to redirect appropriately
+        const sessionRes = await fetch('/api/auth/session')
+        const session = await sessionRes.json()
+        const role = session?.user?.role
+
+        if (role === 'ADMIN') {
+          router.push('/dashboard/admin')
+        } else {
+          router.push('/dashboard/user')
+        }
         router.refresh()
       }
     } catch (err) {

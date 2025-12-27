@@ -32,9 +32,12 @@ export default function UserManagement() {
       if (res.ok) {
         const data = await res.json()
         setUsers(data)
+      } else {
+        console.error('Failed to fetch users')
       }
     } catch (error) {
-      console.error('Error fetching users:', error)
+      console.error('Error fetching users')
+      // Don't log sensitive error details in production
     } finally {
       setLoading(false)
     }
@@ -54,10 +57,11 @@ export default function UserManagement() {
         setFormData({ email: '', password: '', name: '', role: 'USER' })
         fetchUsers()
       } else {
-        const error = await res.json()
-        alert(error.error || 'حدث خطأ')
+        const errorData = await res.json()
+        alert(errorData.error || 'حدث خطأ')
       }
     } catch (error) {
+      console.error('Error adding user')
       alert('حدث خطأ أثناء إضافة المستخدم')
     }
   }
@@ -84,10 +88,11 @@ export default function UserManagement() {
         setFormData({ email: '', password: '', name: '', role: 'USER' })
         fetchUsers()
       } else {
-        const error = await res.json()
-        alert(error.error || 'حدث خطأ')
+        const errorData = await res.json()
+        alert(errorData.error || 'حدث خطأ')
       }
     } catch (error) {
+      console.error('Error updating user')
       alert('حدث خطأ أثناء تعديل المستخدم')
     }
   }
@@ -103,10 +108,11 @@ export default function UserManagement() {
       if (res.ok) {
         fetchUsers()
       } else {
-        const error = await res.json()
-        alert(error.error || 'حدث خطأ')
+        const errorData = await res.json()
+        alert(errorData.error || 'حدث خطأ')
       }
     } catch (error) {
+      console.error('Error deleting user')
       alert('حدث خطأ أثناء حذف المستخدم')
     }
   }

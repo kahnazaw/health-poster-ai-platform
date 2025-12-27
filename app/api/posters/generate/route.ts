@@ -126,6 +126,7 @@ export async function POST(req: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
     }
+    console.error('Error generating poster')
     return NextResponse.json({ error: 'خطأ في الخادم' }, { status: 500 })
   }
 }

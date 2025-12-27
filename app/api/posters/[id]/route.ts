@@ -39,6 +39,7 @@ export async function GET(
 
     return NextResponse.json(poster)
   } catch (error) {
+    console.error('Error fetching poster')
     return NextResponse.json({ error: 'خطأ في الخادم' }, { status: 500 })
   }
 }
@@ -75,6 +76,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'تم حذف البوستر بنجاح' })
   } catch (error) {
+    console.error('Error deleting poster')
     return NextResponse.json({ error: 'خطأ في الخادم' }, { status: 500 })
   }
 }
