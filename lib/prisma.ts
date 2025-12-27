@@ -33,6 +33,7 @@ function validateDatabaseUrl() {
 }
 
 // Create Prisma client - use placeholder during build if DATABASE_URL is not available
+// Validation will happen on first actual database operation via $connect()
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
@@ -45,41 +46,11 @@ export const prisma =
     },
   })
 
-// Validate DATABASE_URL on first actual database operation (lazy validation)
-// This ensures build succeeds even without DATABASE_URL
-if (typeof window === 'undefined') {
-  // Store original methods
-  const originalUserFindUnique = prisma.user.findUnique
-  const originalUserCount = prisma.user.count
-  const originalUserCreate = prisma.user.create
-  const originalUserUpdate = prisma.user.update
-  const originalConnect = prisma.$connect
-
-  // Wrap key methods to validate on first use
-  prisma.user.findUnique = function(...args: any[]) {
-    validateDatabaseUrl()
-    return originalUserFindUnique.apply(this, args)
-  }
-
-  prisma.user.count = function(...args: any[]) {
-    validateDatabaseUrl()
-    return originalUserCount.apply(this, args)
-  }
-
-  prisma.user.create = function(...args: any[]) {
-    validateDatabaseUrl()
-    return originalUserCreate.apply(this, args)
-  }
-
-  prisma.user.update = function(...args: any[]) {
-    validateDatabaseUrl()
-    return originalUserUpdate.apply(this, args)
-  }
-
-  prisma.$connect = function(...args: any[]) {
-    validateDatabaseUrl()
-    return originalConnect.apply(this, args)
-  }
+// Override $connect to validate DATABASE_URL on first connection attempt
+const originalConnect = prisma.$connect.bind(prisma)
+prisma.$connect = async function() {
+  validateDatabaseUrl()
+  return originalConnect()
 }
 
 if (process.env.NODE_ENV !== 'production') {
