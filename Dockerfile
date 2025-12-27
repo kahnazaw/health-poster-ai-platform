@@ -22,10 +22,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Generate Prisma Client with musl binary target
+# Note: DATABASE_URL not required for build - only for runtime
 ENV PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x
 RUN npx prisma generate
 
 # Build Next.js
+# DATABASE_URL is not required during build - validation happens at runtime
 RUN npm run build
 
 # Production image, copy all the files and run next

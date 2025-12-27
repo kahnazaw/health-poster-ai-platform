@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Force dynamic rendering - prevent static generation during build
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 /**
  * Check if setup is allowed (no users exist)
  * CRITICAL: Always allow setup if database is empty or connection fails

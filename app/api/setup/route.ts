@@ -3,6 +3,10 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 
+// Force dynamic rendering - prevent static generation during build
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 const setupSchema = z.object({
   email: z.string().email('البريد الإلكتروني غير صحيح'),
   password: z.string().min(8, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'),
