@@ -22,7 +22,6 @@
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-toast": "^1.1.5",
     "bcryptjs": "^2.4.3",
-    "canvas": "^2.11.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.1",
     "next": "14.0.4",
