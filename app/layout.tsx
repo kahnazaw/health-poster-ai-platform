@@ -2,6 +2,14 @@ import type { Metadata } from 'next'
 import { Cairo } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
+import { ensureAdmin } from '@/scripts/ensure-admin'
+
+// Ensure admin user exists on startup (production only)
+if (process.env.NODE_ENV === 'production') {
+  ensureAdmin().catch(() => {
+    // Silently handle errors to prevent startup crashes
+  })
+}
 
 const cairo = Cairo({ 
   subsets: ['arabic', 'latin'],
