@@ -21,7 +21,11 @@ body {
 
 body {
   color: #1a1a1a;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ecfeff 100%);
+  min-height: 100vh;
+  font-smooth: always;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Professional Design System */

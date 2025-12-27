@@ -3,7 +3,14 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { FileSpreadsheet, FileText, Activity, TrendingUp, Clock } from 'lucide-react'
 import Navbar from '@/components/Navbar'
+import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
+import DataTable from '@/components/ui/DataTable'
+import Badge from '@/components/ui/Badge'
+import { exportLogsToExcel, exportLogsToPDF } from '@/lib/export-reports'
 
 interface ActivityLog {
   id: string
@@ -72,169 +79,212 @@ export default function ActivityLogsPage() {
     }
   }
 
-  const getActionColor = (action: string): string => {
-    if (action.includes('Error')) {
-      return 'bg-red-100 text-red-800'
-    }
-    if (action.includes('Login')) {
-      return 'bg-green-100 text-green-800'
-    }
-    if (action.includes('Generated')) {
-      return 'bg-blue-100 text-blue-800'
-    }
-    return 'bg-gray-100 text-gray-800'
+  const handleExportExcel = () => {
+    exportLogsToExcel(logs, `activity-logs-${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
-  const getRoleBadgeColor = (role: string): string => {
-    if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
-      return 'bg-purple-100 text-purple-800'
-    }
-    return 'bg-gray-100 text-gray-800'
+  const handleExportPDF = () => {
+    exportLogsToPDF(logs, 'تقرير سجل الأنشطة')
+  }
+
+  const getActionBadgeVariant = (action: string): 'success' | 'error' | 'warning' | 'info' | 'default' => {
+    if (action.includes('Error')) return 'error'
+    if (action.includes('Login')) return 'success'
+    if (action.includes('Generated')) return 'info'
+    return 'default'
+  }
+
+  const getRoleBadgeVariant = (role: string): 'success' | 'error' | 'warning' | 'info' | 'default' => {
+    if (role === 'ADMIN' || role === 'SUPER_ADMIN') return 'info'
+    return 'default'
+  }
+
+  // Calculate stats
+  const stats = {
+    total: logs.length,
+    errors: logs.filter(log => log.action.includes('Error')).length,
+    logins: logs.filter(log => log.action.includes('Login')).length,
+    generated: logs.filter(log => log.action.includes('Generated')).length,
   }
 
   if (loading || status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg text-gray-600">جاري التحميل...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-sky-50 to-white">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">جاري التحميل...</p>
+        </motion.div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-sky-50 to-white">
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-sky-600 bg-clip-text text-transparent mb-2">
             سجل الأنشطة
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-lg">
             تتبع جميع الأنشطة والأحداث في النظام
           </p>
-        </div>
+        </motion.div>
 
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
-          {logs.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">لا توجد سجلات أنشطة</p>
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        التاريخ والوقت
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        الإجراء
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        التفاصيل
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        المستخدم
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        الصلاحية
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {logs.map((log) => (
-                      <tr key={log.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(log.createdAt).toLocaleString('ar-EG', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getActionColor(log.action)}`}>
-                            {log.action}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900 max-w-md">
-                          <div className="truncate" title={log.details}>
-                            {log.details}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {log.userName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(log.userRole)}`}>
-                            {log.userRole}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card delay={0.1}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">إجمالي السجلات</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
               </div>
+              <div className="p-3 bg-primary-100 rounded-lg">
+                <Activity className="w-6 h-6 text-primary-600" />
+              </div>
+            </div>
+          </Card>
 
-              {/* Pagination */}
-              {pagination.totalPages > 1 && (
-                <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                  <div className="flex-1 flex justify-between sm:hidden">
-                    <button
-                      onClick={() => fetchLogs(pagination.page - 1)}
-                      disabled={pagination.page === 1}
-                      className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      السابق
-                    </button>
-                    <button
-                      onClick={() => fetchLogs(pagination.page + 1)}
-                      disabled={pagination.page === pagination.totalPages}
-                      className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      التالي
-                    </button>
-                  </div>
-                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-sm text-gray-700">
-                        عرض <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> إلى{' '}
-                        <span className="font-medium">
-                          {Math.min(pagination.page * pagination.limit, pagination.total)}
-                        </span>{' '}
-                        من <span className="font-medium">{pagination.total}</span> سجل
-                      </p>
-                    </div>
-                    <div>
-                      <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                        <button
-                          onClick={() => fetchLogs(pagination.page - 1)}
-                          disabled={pagination.page === 1}
-                          className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          السابق
-                        </button>
-                        <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                          صفحة {pagination.page} من {pagination.totalPages}
-                        </span>
-                        <button
-                          onClick={() => fetchLogs(pagination.page + 1)}
-                          disabled={pagination.page === pagination.totalPages}
-                          className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          التالي
-                        </button>
-                      </nav>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+          <Card delay={0.2}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">تسجيلات الدخول</p>
+                <p className="text-2xl font-bold text-green-600">{stats.logins}</p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </Card>
+
+          <Card delay={0.3}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">البوسترات المولدة</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.generated}</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <FileText className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </Card>
+
+          <Card delay={0.4}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">الأخطاء</p>
+                <p className="text-2xl font-bold text-red-600">{stats.errors}</p>
+              </div>
+              <div className="p-3 bg-red-100 rounded-lg">
+                <Activity className="w-6 h-6 text-red-600" />
+              </div>
+            </div>
+          </Card>
         </div>
+
+        {/* Data Table */}
+        <Card>
+          <DataTable
+            data={logs}
+            columns={[
+              {
+                header: 'التاريخ والوقت',
+                accessor: 'createdAt',
+                render: (value) => (
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-700">
+                      {new Date(value).toLocaleString('ar-EG', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                ),
+              },
+              {
+                header: 'الإجراء',
+                accessor: 'action',
+                render: (value) => (
+                  <Badge variant={getActionBadgeVariant(value)}>
+                    {value}
+                  </Badge>
+                ),
+              },
+              {
+                header: 'التفاصيل',
+                accessor: 'details',
+                render: (value) => (
+                  <div className="max-w-md">
+                    <p className="text-sm text-gray-900 truncate" title={value}>
+                      {value}
+                    </p>
+                  </div>
+                ),
+              },
+              {
+                header: 'المستخدم',
+                accessor: 'userName',
+              },
+              {
+                header: 'الصلاحية',
+                accessor: 'userRole',
+                render: (value) => (
+                  <Badge variant={getRoleBadgeVariant(value)}>
+                    {value}
+                  </Badge>
+                ),
+              },
+            ]}
+            searchable
+            exportable
+            onExportExcel={handleExportExcel}
+            onExportPDF={handleExportPDF}
+          />
+        </Card>
+
+        {/* Pagination */}
+        {pagination.totalPages > 1 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-6 flex justify-center"
+          >
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchLogs(pagination.page - 1)}
+                disabled={pagination.page === 1}
+              >
+                السابق
+              </Button>
+              <span className="px-4 py-2 text-sm text-gray-700 flex items-center">
+                صفحة {pagination.page} من {pagination.totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchLogs(pagination.page + 1)}
+                disabled={pagination.page === pagination.totalPages}
+              >
+                التالي
+              </Button>
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   )
 }
-
