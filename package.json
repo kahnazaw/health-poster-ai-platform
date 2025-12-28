@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm install && npx prisma generate && npx next build",
-    "start": "npx next start -p $PORT",
+    "build": "next build",
+    "start": "next start",
     "lint": "next lint",
     "db:generate": "SKIP_ENV_VALIDATION=1 npx prisma generate",
     "db:push": "npx prisma db push --accept-data-loss",

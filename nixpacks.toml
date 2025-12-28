@@ -1,13 +1,16 @@
 [phases.setup]
 nixPkgs = ["nodejs_20"]
 
+[phases.install]
+cmds = ["npm install"]
+
 [phases.build]
 env = { SKIP_ENV_VALIDATION = "1" }
 cmds = [
-  "npm install",
-  "SKIP_ENV_VALIDATION=1 npm run build"
+  "SKIP_ENV_VALIDATION=1 npx prisma generate",
+  "npm run build"
 ]
 
 [start]
-cmd = "npx prisma migrate deploy || echo 'Migration failed, continuing...' && npm run start"
+cmd = "npx prisma migrate deploy || echo 'Migration failed, continuing...' && npm start"
 
