@@ -1,4 +1,6 @@
 import { PrismaClient } from '@prisma/client'
+import { Pool } from '@prisma/adapter-pg'
+import { Pool as PgPool } from 'pg'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -39,22 +41,20 @@ function validateDatabaseUrl() {
   }
 }
 
-// Create Prisma client - use placeholder during build if DATABASE_URL is not available
+// Create Prisma client - use adapter for Prisma 7.2.0
 // Validation will happen on first actual database operation via $connect()
 // Connection pooling: url = pooled connection, directUrl = direct connection (for migrations)
+let adapter: Pool | undefined
+if (databaseUrl && !databaseUrl.includes('placeholder')) {
+  const pgPool = new PgPool({ connectionString: databaseUrl })
+  adapter = new Pool(pgPool)
+}
+
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
+    adapter: adapter,
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-    datasources: {
-      db: {
-        // Use actual URL if available, otherwise placeholder (will be validated at runtime)
-        url: databaseUrl || 'postgresql://placeholder:placeholder@localhost:5432/placeholder',
-        // directUrl is used for migrations when connection pooling is enabled
-        // If not set, Prisma will use url for both operations
-        ...(directUrl && { directUrl }),
-      },
-    },
   })
 
 // Override $connect to validate DATABASE_URL on first connection attempt
