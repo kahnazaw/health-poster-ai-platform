@@ -156,6 +156,15 @@ public class PosterGovernanceService {
     }
 
     /**
+     * Update poster
+     * تحديث البوستر
+     */
+    @Transactional
+    public Poster updatePoster(Poster poster) {
+        return posterRepository.save(poster);
+    }
+
+    /**
      * Download approved poster (300 DPI)
      * تحميل البوستر المعتمد (300 DPI)
      */

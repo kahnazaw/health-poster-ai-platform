@@ -48,6 +48,103 @@ public class PosterController {
     @Autowired
     private PosterGovernanceService governanceService;
 
+    @Autowired
+    private com.kirkukhealth.poster.service.GeminiAIService geminiAIService;
+
+    @Autowired
+    private com.kirkukhealth.poster.service.HealthOccasionService healthOccasionService;
+
+    /**
+     * Get smart suggestions based on today's health occasions
+     * الحصول على اقتراحات ذكية بناءً على المناسبات الصحية لليوم
+     * 
+     * GET /api/posters/smart-suggestions
+     */
+    @GetMapping("/smart-suggestions")
+    public ResponseEntity<Map<String, Object>> getSmartSuggestions() {
+        Map<String, Object> suggestions = healthOccasionService.getSmartSuggestions();
+        return ResponseEntity.ok(suggestions);
+    }
+
+    /**
+     * Regenerate poster content using AI (AI Magic Write)
+     * إعادة توليد محتوى البوستر باستخدام الذكاء الاصطناعي (كتابة ذكية)
+     * 
+     * POST /api/posters/{posterId}/regenerate-ai
+     */
+    @PostMapping("/{posterId}/regenerate-ai")
+    public ResponseEntity<?> regenerateAIContent(
+            @PathVariable String posterId,
+            @RequestParam(required = false) String topic,
+            @RequestParam(required = false, defaultValue = "ar") String language,
+            @RequestParam(required = false, defaultValue = "formal") String tone,
+            @RequestHeader(value = "X-User-Id", required = false) String userId) {
+        
+        try {
+            if (userId == null || userId.isEmpty()) {
+                userId = "default-user-id";
+            }
+
+            // Get existing poster
+            Optional<Poster> posterOpt = governanceService.getPosterById(posterId);
+            if (posterOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Poster poster = posterOpt.get();
+            String topicToUse = topic != null ? topic : poster.getTopic();
+            
+            if (topicToUse == null || topicToUse.isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(new ErrorResponse("خطأ", "يجب تحديد موضوع البوستر"));
+            }
+
+            // Generate new AI content
+            PosterContent newContent = geminiAIService.generatePosterContent(topicToUse, language, tone);
+            
+            // Regenerate image with new content
+            UserProfile profile = userProfileService.getOrCreateProfile(userId);
+            byte[] newImageBytes = posterImageService.generatePosterImage(newContent, profile);
+            
+            // Update poster content (convert to JSON)
+            poster.setTitle(newContent.getTitle());
+            poster.setTopic(newContent.getTopic());
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                String contentJson = objectMapper.writeValueAsString(newContent);
+                poster.setContent(contentJson);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to serialize content: " + e.getMessage(), e);
+            }
+            poster.setImageBytes(newImageBytes);
+            
+            // Save updated poster
+            governanceService.updatePoster(poster);
+            
+            // Convert image to base64 for response
+            String imageBase64 = Base64.getEncoder().encodeToString(newImageBytes);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("posterId", poster.getId());
+            response.put("imageUrl", "data:image/png;base64," + imageBase64);
+            response.put("content", Map.of(
+                "title", newContent.getTitle(),
+                "topic", newContent.getTopic(),
+                "mainMessage", newContent.getMainMessage() != null ? newContent.getMainMessage() : "",
+                "bulletPoints", newContent.getBulletPoints(),
+                "closing", newContent.getClosing() != null ? newContent.getClosing() : "",
+                "language", newContent.getLanguage()
+            ));
+            response.put("message", "تم إعادة توليد المحتوى بنجاح باستخدام الذكاء الاصطناعي");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("خطأ في إعادة التوليد", e.getMessage()));
+        }
+    }
+
     /**
      * Generate poster
      * توليد بوستر

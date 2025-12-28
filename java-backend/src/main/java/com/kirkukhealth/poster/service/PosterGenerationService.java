@@ -12,9 +12,10 @@ import java.io.IOException;
  * خدمة توليد البوسترات
  * 
  * Orchestrates the poster generation process:
- * 1. Content validation against MOH guidelines
- * 2. Cultural context enhancement
- * 3. Image generation with logo and footer
+ * 1. AI-powered content generation (Gemini AI)
+ * 2. Content validation against MOH guidelines
+ * 3. Cultural context enhancement
+ * 4. Image generation with logo and footer
  */
 @Service
 public class PosterGenerationService {
@@ -28,13 +29,53 @@ public class PosterGenerationService {
     @Autowired
     private UserProfileService userProfileService;
 
+    @Autowired
+    private GeminiAIService geminiAIService;
+
     /**
      * Generate complete poster (content + image)
      * توليد البوستر الكامل (المحتوى + الصورة)
+     * 
+     * If content is not AI-generated and topic is provided, uses Gemini AI to generate content
      */
     public PosterGenerationResult generatePoster(PosterContent content, String userId) throws IOException {
         // Get or create user profile
         UserProfile profile = userProfileService.getOrCreateProfile(userId);
+        
+        // If content is not AI-generated and topic is provided, generate with AI
+        if ((content.getAiGenerated() == null || !content.getAiGenerated()) 
+            && content.getTopic() != null && !content.getTopic().isEmpty()) {
+            try {
+                // Determine tone based on topic category
+                String tone = determineToneForTopic(content.getTopic());
+                String language = content.getLanguage() != null ? content.getLanguage() : "ar";
+                
+                // Generate AI content
+                PosterContent aiContent = geminiAIService.generatePosterContent(
+                    content.getTopic(), 
+                    language, 
+                    tone
+                );
+                
+                // Merge AI content with user-provided content (if any)
+                if (content.getTitle() != null && !content.getTitle().isEmpty()) {
+                    aiContent.setTitle(content.getTitle());
+                }
+                if (content.getMainMessage() != null && !content.getMainMessage().isEmpty()) {
+                    aiContent.setMainMessage(content.getMainMessage());
+                }
+                if (content.getBulletPoints() != null && !content.getBulletPoints().isEmpty()) {
+                    // Merge user bullet points with AI-generated ones
+                    aiContent.getBulletPoints().addAll(0, content.getBulletPoints());
+                }
+                
+                content = aiContent;
+                System.out.println("✅ AI content generated for topic: " + content.getTopic());
+            } catch (Exception e) {
+                System.err.println("⚠️ AI generation failed, using provided content: " + e.getMessage());
+                // Continue with provided content
+            }
+        }
         
         // Enhance content with MOH guidelines
         content = contentAuthorityService.enhanceWithMOHGuidelines(content);
@@ -57,6 +98,25 @@ public class PosterGenerationService {
             .profile(profile)
             .mohApproved(content.getMohApproved())
             .build();
+    }
+
+    /**
+     * Determine appropriate tone for a topic
+     * تحديد النبرة المناسبة لموضوع
+     */
+    private String determineToneForTopic(String topic) {
+        if (topic == null) return "formal";
+        
+        String lowerTopic = topic.toLowerCase();
+        if (lowerTopic.contains("كوليرا") || lowerTopic.contains("covid") || 
+            lowerTopic.contains("طوارئ") || lowerTopic.contains("معدية")) {
+            return "emergency";
+        } else if (lowerTopic.contains("تغذية") || lowerTopic.contains("نظافة") || 
+                   lowerTopic.contains("تطعيم") || lowerTopic.contains("تعليم")) {
+            return "educational";
+        } else {
+            return "formal";
+        }
     }
 
     /**

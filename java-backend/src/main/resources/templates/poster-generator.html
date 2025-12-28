@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مولد البوسترات بالذكاء الاصطناعي - دائرة صحة كركوك</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Arial Unicode MS', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .smart-suggestion {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.3);
+            display: none;
+        }
+
+        .smart-suggestion.active {
+            display: block;
+        }
+
+        .smart-suggestion h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .smart-suggestion .suggestion-topics {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .suggestion-topic-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .suggestion-topic-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .form-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .topic-select {
+            font-size: 16px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-ai {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-ai:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(72, 187, 120, 0.5);
+        }
+
+        .btn-ai:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .preview-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: none;
+        }
+
+        .preview-section.active {
+            display: block;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-right: 4px solid #c33;
+        }
+
+        .success {
+            background: #efe;
+            color: #3c3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-right: 4px solid #3c3;
+        }
+
+        @media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ مولد البوسترات بالذكاء الاصطناعي</h1>
+            <p>دائرة صحة كركوك – قطاع كركوك الأول</p>
+        </div>
+
+        <!-- Smart Suggestion Banner -->
+        <div id="smartSuggestion" class="smart-suggestion">
+            <h3>💡 اقتراح ذكي لليوم</h3>
+            <p id="suggestionMessage"></p>
+            <div class="suggestion-topics" id="suggestionTopics"></div>
+        </div>
+
+        <!-- Form Section -->
+        <div class="form-section">
+            <form id="posterForm">
+                <div class="form-group">
+                    <label for="topic">الموضوع الصحي (من الـ 66 موضوعاً الرسمية) *</label>
+                    <select id="topic" class="topic-select" required>
+                        <option value="">اختر الموضوع...</option>
+                        <!-- Topics will be populated via JavaScript -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="language">اللغة</label>
+                    <select id="language">
+                        <option value="ar">العربية</option>
+                        <option value="ku">الكردية</option>
+                        <option value="tr">التركمانية</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="tone">النبرة</label>
+                    <select id="tone">
+                        <option value="formal">رسمية</option>
+                        <option value="friendly">ودية</option>
+                        <option value="educational">تعليمية</option>
+                        <option value="emergency">عاجلة (للمواضيع الحرجة)</option>
+                    </select>
+                </div>
+
+                <div id="errorMessage" class="error" style="display: none;"></div>
+                <div id="successMessage" class="success" style="display: none;"></div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary" id="generateBtn">
+                        <span>🚀</span> توليد البوستر بالذكاء الاصطناعي
+                    </button>
+                    <button type="button" class="btn btn-ai" id="regenerateBtn" style="display: none;">
+                        <span>✨</span> إعادة الكتابة بالذكاء الاصطناعي (AI Magic Write)
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Preview Section -->
+        <div id="previewSection" class="preview-section">
+            <h2 style="margin-bottom: 20px; text-align: center;">معاينة البوستر</h2>
+            <img id="previewImage" class="preview-image" alt="Poster Preview">
+            <div class="button-group" style="justify-content: center;">
+                <button type="button" class="btn btn-secondary" onclick="downloadPoster()">
+                    <span>⬇️</span> تحميل البوستر (300 DPI)
+                </button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">جاري التوليد...</div>
+    </div>
+
+    <script>
+        let currentPosterId = null;
+        let allTopics = [];
+
+        // Load all 66 topics on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllTopics();
+            loadSmartSuggestions();
+        });
+
+        // Load all 66 MOH topics
+        async function loadAllTopics() {
+            try {
+                // Get topics from HealthStatisticsService
+                const response = await fetch('/api/statistics/categories-topics');
+                if (response.ok) {
+                    const data = await response.json();
+                    const topicSelect = document.getElementById('topic');
+                    
+                    // Clear existing options (except the first placeholder)
+                    topicSelect.innerHTML = '<option value="">اختر الموضوع...</option>';
+                    
+                    // Flatten all topics from all categories
+                    for (const [category, topics] of Object.entries(data)) {
+                        const optgroup = document.createElement('optgroup');
+                        optgroup.label = category;
+                        
+                        topics.forEach(topic => {
+                            const option = document.createElement('option');
+                            option.value = topic;
+                            option.textContent = topic;
+                            optgroup.appendChild(option);
+                            allTopics.push(topic);
+                        });
+                        
+                        topicSelect.appendChild(optgroup);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading topics:', error);
+                showError('فشل تحميل المواضيع. يرجى تحديث الصفحة.');
+            }
+        }
+
+        // Load smart suggestions
+        async function loadSmartSuggestions() {
+            try {
+                const response = await fetch('/api/posters/smart-suggestions');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.hasSuggestion) {
+                        const suggestionDiv = document.getElementById('smartSuggestion');
+                        const messageDiv = document.getElementById('suggestionMessage');
+                        const topicsDiv = document.getElementById('suggestionTopics');
+                        
+                        messageDiv.textContent = data.message;
+                        
+                        if (data.suggestedTopics && data.suggestedTopics.length > 0) {
+                            data.suggestedTopics.forEach(topic => {
+                                const btn = document.createElement('button');
+                                btn.type = 'button';
+                                btn.className = 'suggestion-topic-btn';
+                                btn.textContent = topic;
+                                btn.onclick = () => {
+                                    document.getElementById('topic').value = topic;
+                                    document.getElementById('posterForm').dispatchEvent(new Event('submit'));
+                                };
+                                topicsDiv.appendChild(btn);
+                            });
+                        }
+                        
+                        suggestionDiv.classList.add('active');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading suggestions:', error);
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('posterForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const topic = document.getElementById('topic').value;
+            const language = document.getElementById('language').value;
+            const tone = document.getElementById('tone').value;
+            
+            if (!topic) {
+                showError('الرجاء اختيار موضوع');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const generateBtn = document.getElementById('generateBtn');
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            
+            loading.style.display = 'block';
+            generateBtn.disabled = true;
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            document.getElementById('previewSection').classList.remove('active');
+
+            try {
+                const response = await fetch('/api/posters/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User-Id': 'default-user-id' // Should come from authentication
+                    },
+                    body: JSON.stringify({
+                        topic: topic,
+                        language: language,
+                        tone: tone,
+                        useAI: true,
+                        useMOHGuidelines: true
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentPosterId = data.posterId;
+                    
+                    // Show preview
+                    document.getElementById('previewImage').src = data.imageUrl;
+                    document.getElementById('previewSection').classList.add('active');
+                    document.getElementById('regenerateBtn').style.display = 'inline-flex';
+                    
+                    showSuccess('تم توليد البوستر بنجاح!');
+                } else {
+                    const errorData = await response.json();
+                    showError(errorData.message || 'حدث خطأ أثناء توليد البوستر');
+                }
+            } catch (error) {
+                showError('حدث خطأ أثناء الاتصال بالخادم: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+                generateBtn.disabled = false;
+            }
+        });
+
+        // Handle AI regeneration
+        document.getElementById('regenerateBtn').addEventListener('click', async function() {
+            if (!currentPosterId) {
+                showError('لا يوجد بوستر لإعادة التوليد');
+                return;
+            }
+
+            const topic = document.getElementById('topic').value;
+            const language = document.getElementById('language').value;
+            const tone = document.getElementById('tone').value;
+            
+            const regenerateBtn = document.getElementById('regenerateBtn');
+            const loading = document.getElementById('loading');
+            const errorDiv = document.getElementById('errorMessage');
+            
+            loading.style.display = 'block';
+            regenerateBtn.disabled = true;
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`/api/posters/${currentPosterId}/regenerate-ai?topic=${encodeURIComponent(topic)}&language=${language}&tone=${tone}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-User-Id': 'default-user-id'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Update preview
+                    document.getElementById('previewImage').src = data.imageUrl;
+                    showSuccess('تم إعادة توليد المحتوى بنجاح!');
+                } else {
+                    const errorData = await response.json();
+                    showError(errorData.message || 'حدث خطأ أثناء إعادة التوليد');
+                }
+            } catch (error) {
+                showError('حدث خطأ أثناء الاتصال بالخادم: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+                regenerateBtn.disabled = false;
+            }
+        });
+
+        // Download poster
+        async function downloadPoster() {
+            if (!currentPosterId) {
+                showError('لا يوجد بوستر للتحميل');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/posters/${currentPosterId}/download`);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `poster-${currentPosterId}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    showError('فشل تحميل البوستر');
+                }
+            } catch (error) {
+                showError('حدث خطأ أثناء التحميل: ' + error.message);
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
+

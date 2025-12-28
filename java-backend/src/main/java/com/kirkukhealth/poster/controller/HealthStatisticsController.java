@@ -53,6 +53,17 @@ public class HealthStatisticsController {
     }
 
     /**
+     * Get all categories and topics (for poster generator)
+     * الحصول على جميع الفئات والمواضيع (لمولد البوسترات)
+     * 
+     * GET /api/statistics/categories-topics
+     */
+    @GetMapping("/categories-topics")
+    public ResponseEntity<Map<String, List<String>>> getCategoriesTopics() {
+        return ResponseEntity.ok(statisticsService.getAllCategoryTopics());
+    }
+
+    /**
      * Get topics for a category
      * الحصول على المواضيع لفئة معينة
      * 

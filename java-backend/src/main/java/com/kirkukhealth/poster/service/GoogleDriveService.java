@@ -1,15 +1,12 @@
 package com.kirkukhealth.poster.service;
 
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
@@ -91,7 +88,7 @@ public class GoogleDriveService {
             .setApprovalPrompt("force")
             .build();
 
-        GoogleAuthorizationCodeFlow.TokenResponse tokenResponse = flow
+        com.google.api.client.auth.oauth2.TokenResponse tokenResponse = flow
             .newTokenRequest(authorizationCode)
             .setRedirectUri(redirectUri)
             .execute();
@@ -235,7 +232,7 @@ public class GoogleDriveService {
             com.google.api.client.auth.oauth2.BearerToken.authorizationHeaderAccessMethod())
             .setTransport(httpTransport)
             .setJsonFactory(JSON_FACTORY)
-            .setTokenServerUrl("https://oauth2.googleapis.com/token")
+            .setTokenServerUrl(new GenericUrl("https://oauth2.googleapis.com/token"))
             .setClientAuthentication(new com.google.api.client.auth.oauth2.ClientParametersAuthentication(
                 clientId, clientSecret))
             .build();
@@ -303,8 +300,9 @@ public class GoogleDriveService {
         com.google.api.client.auth.oauth2.TokenResponse tokenResponse = 
             new com.google.api.client.auth.oauth2.RefreshTokenRequest(
                 httpTransport, JSON_FACTORY,
-                new com.google.api.client.auth.oauth2.ClientParametersAuthentication(clientId, clientSecret),
+                new GenericUrl("https://oauth2.googleapis.com/token"),
                 refreshToken)
+            .setClientAuthentication(new com.google.api.client.auth.oauth2.ClientParametersAuthentication(clientId, clientSecret))
             .execute();
 
         // Update tokens

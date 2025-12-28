@@ -119,5 +119,19 @@ public class StatisticsViewController {
         // Data will be loaded via AJAX
         return "admin-dashboard";
     }
+
+    /**
+     * Display AI-powered poster generator
+     * عرض مولد البوسترات بالذكاء الاصطناعي
+     * 
+     * GET /posters/generator
+     */
+    @GetMapping("/posters/generator")
+    public String showPosterGenerator(Model model) {
+        // Get all categories and topics for dropdown
+        Map<String, List<String>> categoryTopics = statisticsService.getAllCategoryTopics();
+        model.addAttribute("categoryTopics", categoryTopics);
+        return "poster-generator";
+    }
 }
 

@@ -422,36 +422,6 @@ public class PdfReportService {
     }
 
     /**
-     * Get category statistics
-     * الحصول على إحصائيات الفئات
-     */
-    private Map<String, Long> getCategoryStatistics(LocalDate startDate, LocalDate endDate) {
-        List<Object[]> results = statisticsRepository.aggregateAllCentersMonthlyTotals(startDate, endDate);
-
-        Map<String, Long> categoryTotals = new LinkedHashMap<>();
-
-        for (Object[] row : results) {
-            String category = (String) row[1];
-            Long totalMeetings = ((Number) row[3]).longValue();
-            Long totalLectures = ((Number) row[4]).longValue();
-            Long totalSeminars = ((Number) row[5]).longValue();
-            Long total = totalMeetings + totalLectures + totalSeminars;
-
-            categoryTotals.put(category, categoryTotals.getOrDefault(category, 0L) + total);
-        }
-
-        // Sort by total (descending)
-        return categoryTotals.entrySet().stream()
-            .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                Map.Entry::getValue,
-                (e1, e2) -> e1,
-                LinkedHashMap::new
-            ));
-    }
-
-    /**
      * Get top performers
      * الحصول على أفضل الأداء
      */
