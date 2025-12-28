@@ -46,15 +46,24 @@ function validateDatabaseUrl() {
 // Connection pooling: url = pooled connection, directUrl = direct connection (for migrations)
 let adapter: Pool | undefined
 if (databaseUrl && !databaseUrl.includes('placeholder')) {
-  const pgPool = new PgPool({ connectionString: databaseUrl })
-  adapter = new Pool(pgPool)
+  try {
+    const pgPool = new PgPool({ connectionString: databaseUrl })
+    adapter = new Pool(pgPool)
+    console.log('✅ Prisma adapter initialized with DATABASE_URL')
+  } catch (adapterError) {
+    console.error('❌ Failed to create Prisma adapter:', adapterError)
+    // Continue without adapter - Prisma will use connection string directly
+  }
+} else {
+  console.warn('⚠️ DATABASE_URL not set or contains placeholder - adapter not initialized')
+  console.warn('⚠️ Prisma will need DATABASE_URL at runtime')
 }
 
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     adapter: adapter,
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn', 'query'] : ['error'],
   })
 
 // Override $connect to validate DATABASE_URL on first connection attempt

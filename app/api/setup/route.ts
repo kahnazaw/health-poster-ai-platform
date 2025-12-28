@@ -19,9 +19,23 @@ const setupSchema = z.object({
  */
 export async function POST(req: NextRequest) {
   try {
+    // Verify database connection first
+    console.log('🔌 Checking database connection...')
+    console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET')
+    
+    try {
+      await prisma.$connect()
+      console.log('✅ Database connection successful')
+    } catch (connectError) {
+      console.error('❌ Database connection failed:', connectError)
+      throw new Error('Database connection failed. Please check DATABASE_URL environment variable.')
+    }
+
     // EMERGENCY: Temporarily bypass user count check for admin reset
     // Check if any users already exist
+    console.log('📊 Checking user count...')
     const userCount = await prisma.user.count()
+    console.log(`📊 User count: ${userCount}`)
 
     // EMERGENCY BYPASS: Allow creating admin even if users exist
     // This will create a new admin or update existing one
@@ -134,19 +148,52 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     )
   } catch (error) {
+    // Log the full error for debugging
+    console.error('❌ Error during setup:', error)
+    
     if (error instanceof z.ZodError) {
+      console.error('Validation error:', error.errors)
       return NextResponse.json(
         { error: error.errors[0].message },
         { status: 400 }
       )
     }
 
-    // EMERGENCY: Don't block on "User already exists" error
-    // This is handled in the main logic now
+    // Check for Prisma-specific errors
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as any
+      console.error('Prisma error code:', prismaError.code)
+      console.error('Prisma error message:', prismaError.message)
+      
+      // Handle specific Prisma errors
+      if (prismaError.code === 'P2002') {
+        return NextResponse.json(
+          { error: 'البريد الإلكتروني مستخدم بالفعل' },
+          { status: 400 }
+        )
+      }
+      
+      if (prismaError.code === 'P1001') {
+        console.error('❌ Database connection error - DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET')
+        return NextResponse.json(
+          { error: 'خطأ في الاتصال بقاعدة البيانات. يرجى التحقق من إعدادات قاعدة البيانات.' },
+          { status: 500 }
+        )
+      }
+    }
 
-    console.error('Error during setup')
+    // Log error details for debugging
+    if (error instanceof Error) {
+      console.error('Error name:', error.name)
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
+
     return NextResponse.json(
-      { error: 'حدث خطأ أثناء إنشاء الحساب' },
+      { 
+        error: 'حدث خطأ أثناء إنشاء الحساب',
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
+      },
       { status: 500 }
     )
   }
