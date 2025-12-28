@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إعدادات Google Drive - دائرة صحة كركوك</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Arial Unicode MS', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .status-card {
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 2px solid;
+        }
+
+        .status-card.linked {
+            background: #e6ffed;
+            border-color: #48bb78;
+            color: #22543d;
+        }
+
+        .status-card.not-linked {
+            background: #fff5f5;
+            border-color: #fc8181;
+            color: #742a2a;
+        }
+
+        .status-card.syncing {
+            background: #fffaf0;
+            border-color: #ed8936;
+            color: #7c2d12;
+        }
+
+        .status-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .status-details {
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #c53030;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #9b2c2c;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .info-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .info-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .info-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .info-section li {
+            padding: 8px 0;
+            color: #666;
+        }
+
+        .info-section li:before {
+            content: "✓ ";
+            color: #48bb78;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .message.success {
+            background: #e6ffed;
+            color: #22543d;
+        }
+
+        .message.error {
+            background: #fff5f5;
+            color: #742a2a;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>إعدادات Google Drive</h1>
+            <p>ربط حسابك الشخصي بـ Google Drive</p>
+        </div>
+
+        <div id="message" class="message" style="display: none;"></div>
+
+        <div id="loading" class="loading" style="display: none;">جاري التحميل...</div>
+
+        <div id="statusCard" class="status-card not-linked">
+            <div class="status-title" id="statusTitle">غير مرتبط</div>
+            <div class="status-details" id="statusDetails">
+                لم يتم ربط حساب Google Drive بعد
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button id="linkButton" class="btn btn-primary" onclick="linkGoogleDrive()">
+                🔗 ربط Google Drive
+            </button>
+            <button id="unlinkButton" class="btn btn-danger" onclick="unlinkGoogleDrive()" style="display: none;">
+                ✂️ إلغاء الربط
+            </button>
+        </div>
+
+        <div class="info-section">
+            <h3>معلومات مهمة:</h3>
+            <ul>
+                <li>سيتم رفع جميع تقارير PDF تلقائياً إلى مجلد "My Health Reports - Sector 1" في Google Drive الخاص بك</li>
+                <li>الرموز مشفرة بشكل آمن ولا يمكن لأي مستخدم آخر الوصول إليها</li>
+                <li>يمكنك إلغاء الربط في أي وقت</li>
+                <li>جميع التقارير تحتوي على 66 موضوع فرعي من الفئات الـ 11</li>
+            </ul>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const userId = /*[[${userId}]]*/ '';
+        /*]]>*/
+
+        // Load status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStatus();
+        });
+
+        // Load sync status
+        async function loadStatus() {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch(`/api/drive/status?userId=${userId}`);
+                const data = await response.json();
+
+                updateStatusUI(data);
+            } catch (error) {
+                console.error('Error loading status:', error);
+                showMessage('خطأ في تحميل الحالة', 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Update status UI
+        function updateStatusUI(data) {
+            const statusCard = document.getElementById('statusCard');
+            const statusTitle = document.getElementById('statusTitle');
+            const statusDetails = document.getElementById('statusDetails');
+            const linkButton = document.getElementById('linkButton');
+            const unlinkButton = document.getElementById('unlinkButton');
+
+            if (data.googleDriveEnabled && data.syncStatus === 'LINKED') {
+                statusCard.className = 'status-card linked';
+                statusTitle.textContent = '✅ مرتبط بنجاح';
+                statusDetails.innerHTML = `
+                    <div>حالة المزامنة: ${data.syncStatus}</div>
+                    <div>اسم المجلد: ${data.folderName || 'My Health Reports - Sector 1'}</div>
+                    ${data.lastSyncAt ? `<div>آخر مزامنة: ${new Date(data.lastSyncAt).toLocaleString('ar-IQ')}</div>` : ''}
+                `;
+                linkButton.style.display = 'none';
+                unlinkButton.style.display = 'inline-block';
+            } else if (data.syncStatus === 'SYNCING') {
+                statusCard.className = 'status-card syncing';
+                statusTitle.textContent = '⏳ جاري المزامنة...';
+                statusDetails.textContent = 'جاري رفع التقرير إلى Google Drive';
+                linkButton.disabled = true;
+            } else {
+                statusCard.className = 'status-card not-linked';
+                statusTitle.textContent = '❌ غير مرتبط';
+                statusDetails.textContent = 'لم يتم ربط حساب Google Drive بعد';
+                linkButton.style.display = 'inline-block';
+                unlinkButton.style.display = 'none';
+            }
+        }
+
+        // Link Google Drive
+        async function linkGoogleDrive() {
+            try {
+                const response = await fetch(`/api/drive/oauth/authorize?userId=${userId}`);
+                const data = await response.json();
+
+                if (data.authorizationUrl) {
+                    // Open authorization URL in new window
+                    window.location.href = data.authorizationUrl;
+                } else {
+                    showMessage('خطأ في بدء عملية الربط', 'error');
+                }
+            } catch (error) {
+                console.error('Error linking Google Drive:', error);
+                showMessage('خطأ في ربط Google Drive: ' + error.message, 'error');
+            }
+        }
+
+        // Unlink Google Drive
+        async function unlinkGoogleDrive() {
+            if (!confirm('هل أنت متأكد من إلغاء ربط Google Drive؟')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/drive/unlink?userId=${userId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showMessage('تم إلغاء ربط Google Drive بنجاح', 'success');
+                    setTimeout(() => {
+                        loadStatus();
+                    }, 1000);
+                } else {
+                    showMessage('خطأ في إلغاء الربط', 'error');
+                }
+            } catch (error) {
+                console.error('Error unlinking Google Drive:', error);
+                showMessage('خطأ في إلغاء ربط Google Drive: ' + error.message, 'error');
+            }
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Check if returning from OAuth callback
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success') === 'true') {
+            showMessage('تم ربط Google Drive بنجاح!', 'success');
+            loadStatus();
+        } else if (urlParams.get('error')) {
+            showMessage('فشل ربط Google Drive: ' + urlParams.get('error'), 'error');
+        }
+    </script>
+</body>
+</html>
+

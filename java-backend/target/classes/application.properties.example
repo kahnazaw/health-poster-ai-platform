@@ -1,0 +1,10 @@
+# Google OAuth2 Configuration
+# إعدادات OAuth2 لـ Google
+google.oauth.client.id=YOUR_GOOGLE_CLIENT_ID
+google.oauth.client.secret=YOUR_GOOGLE_CLIENT_SECRET
+google.oauth.redirect.uri=http://localhost:8080/api/drive/oauth/callback
+
+# Token Encryption Password
+# كلمة مرور التشفير للرموز
+jasypt.encryptor.password=KirkukHealth2024SecretKey
+

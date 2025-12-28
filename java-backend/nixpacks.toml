@@ -1,0 +1,38 @@
+# ============================================================================
+# Nixpacks configuration for Railway deployment
+# ============================================================================
+# إعدادات Nixpacks لنشر Railway
+# VERIFIED: Java 20 configuration for optimal performance
+#
+# Purpose: Configure Railway build and deployment process
+# الغرض: إعداد عملية البناء والنشر على Railway
+#
+# Build Process:
+# 1. Setup: Install JDK 20 and Maven
+# 2. Install: Download dependencies
+# 3. Build: Compile and package application
+# 4. Start: Run the JAR file
+# ============================================================================
+
+[phases.setup]
+# Install Java 20 JDK and Maven build tool
+# تثبيت Java 20 JDK وأداة البناء Maven
+nixPkgs = ["jdk20", "maven"]
+
+[phases.install]
+# Download all dependencies (cached for faster rebuilds)
+# تحميل جميع التبعيات (مخزنة مؤقتاً لإعادة بناء أسرع)
+cmds = ["mvn clean install -DskipTests"]
+
+[phases.build]
+# Build the application JAR file
+# بناء ملف JAR للتطبيق
+cmds = ["mvn package -DskipTests"]
+
+[start]
+# Start command: Run the JAR file
+# أمر التشغيل: تشغيل ملف JAR
+# Note: Railway sets PORT environment variable automatically
+# ملاحظة: Railway يضبط متغير البيئة PORT تلقائياً
+cmd = "java -jar target/health-poster-ai-platform-1.0.0.jar"
+

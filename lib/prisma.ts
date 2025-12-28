@@ -87,7 +87,7 @@ export const prisma =
 const originalConnect = prisma.$connect.bind(prisma)
 prisma.$connect = async function() {
   try {
-    validateDatabaseUrl()
+  validateDatabaseUrl()
     // Add timeout for connection attempts (20 seconds to prevent P1001 errors)
     const connectPromise = originalConnect()
     const timeoutPromise = new Promise((_, reject) => 

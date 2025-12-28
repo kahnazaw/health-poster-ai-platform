@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مركز الاتصالات الموحد - دائرة صحة كركوك</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Arial Unicode MS', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .bulletin-item {
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+        }
+
+        .bulletin-item.pinned {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .bulletin-item.high-priority {
+            border-left: 5px solid #c53030;
+        }
+
+        .bulletin-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .bulletin-content {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .bulletin-meta {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            max-width: 70%;
+        }
+
+        .message.sent {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.received {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .chat-input button {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .faq-item {
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .faq-item:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .faq-answer {
+            color: #666;
+            display: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .faq-item.expanded .faq-answer {
+            display: block;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-meta {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .file-actions button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                width: 100%;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+
+            .chat-container {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>مركز الاتصالات الموحد</h1>
+            <p>دائرة صحة كركوك – قطاع كركوك الأول</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('bulletins')">النشرات الرسمية</button>
+            <button class="tab-button" onclick="showTab('chat')">الدردشة الخاصة</button>
+            <button class="tab-button" onclick="showTab('faq')">قاعدة المعرفة</button>
+            <button class="tab-button" onclick="showTab('files')">المشاركة الملفات</button>
+        </div>
+
+        <!-- Bulletins Tab -->
+        <div id="bulletins" class="tab-content active">
+            <h2>النشرات الرسمية من وزارة الصحة</h2>
+            <div id="bulletinsList">
+                <p style="text-align: center; color: #999; padding: 40px;">جاري تحميل النشرات...</p>
+            </div>
+        </div>
+
+        <!-- Chat Tab -->
+        <div id="chat" class="tab-content">
+            <h2>الدردشة الخاصة</h2>
+            <div style="margin-bottom: 15px;">
+                <label>اختر المركز الصحي:</label>
+                <select id="chatCenterSelect" style="width: 100%; padding: 10px; margin-top: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <option value="">-- اختر المركز --</option>
+                    <option th:each="center : ${centers}" 
+                            th:value="${center.userId}" 
+                            th:text="${center.healthCenterName ?: center.userId}">
+                    </option>
+                </select>
+            </div>
+            <div class="chat-container" id="chatContainer" style="display: none;">
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input">
+                    <input type="text" id="messageInput" placeholder="اكتب رسالتك هنا..." onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button onclick="sendMessage()">إرسال</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Tab -->
+        <div id="faq" class="tab-content">
+            <h2>قاعدة المعرفة (أسئلة وأجوبة)</h2>
+            <input type="text" class="search-box" id="faqSearch" placeholder="ابحث في الأسئلة والأجوبة..." onkeyup="searchFAQs()">
+            <div id="faqList">
+                <p style="text-align: center; color: #999; padding: 40px;">جاري تحميل الأسئلة الشائعة...</p>
+            </div>
+        </div>
+
+        <!-- Files Tab -->
+        <div id="files" class="tab-content">
+            <h2>المشاركة الملفات</h2>
+            <div id="filesList">
+                <p style="text-align: center; color: #999; padding: 40px;">جاري تحميل الملفات...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUserId = 'admin'; // Should come from authentication
+        let currentChatCenter = null;
+
+        // Tab switching
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Load tab content
+            if (tabName === 'bulletins') loadBulletins();
+            else if (tabName === 'chat') setupChat();
+            else if (tabName === 'faq') loadFAQs();
+            else if (tabName === 'files') loadFiles();
+        }
+
+        // Load bulletins
+        async function loadBulletins() {
+            try {
+                const response = await fetch('/api/communication/bulletins');
+                const data = await response.json();
+                
+                const container = document.getElementById('bulletinsList');
+                if (data.bulletins && data.bulletins.length > 0) {
+                    container.innerHTML = data.bulletins.map(bulletin => `
+                        <div class="bulletin-item ${bulletin.isPinned ? 'pinned' : ''} ${bulletin.priority === 'HIGH' ? 'high-priority' : ''}">
+                            <div class="bulletin-title">
+                                ${bulletin.isPinned ? '📌 ' : ''}${bulletin.title}
+                            </div>
+                            <div class="bulletin-content">${bulletin.content}</div>
+                            <div class="bulletin-meta">
+                                ${new Date(bulletin.createdAt).toLocaleDateString('ar-IQ')} | 
+                                الأولوية: ${bulletin.priority}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">لا توجد نشرات حالياً</p>';
+                }
+            } catch (error) {
+                console.error('Error loading bulletins:', error);
+            }
+        }
+
+        // Setup chat
+        function setupChat() {
+            document.getElementById('chatCenterSelect').addEventListener('change', function() {
+                currentChatCenter = this.value;
+                if (currentChatCenter) {
+                    document.getElementById('chatContainer').style.display = 'flex';
+                    loadConversation();
+                    // Poll for new messages every 3 seconds
+                    setInterval(loadConversation, 3000);
+                } else {
+                    document.getElementById('chatContainer').style.display = 'none';
+                }
+            });
+        }
+
+        // Load conversation
+        async function loadConversation() {
+            if (!currentChatCenter) return;
+            
+            try {
+                const response = await fetch(`/api/communication/messages/conversation?userId1=${currentUserId}&userId2=${currentChatCenter}`);
+                const data = await response.json();
+                
+                const container = document.getElementById('chatMessages');
+                container.innerHTML = data.messages.map(msg => `
+                    <div class="message ${msg.senderId === currentUserId ? 'sent' : 'received'}">
+                        <div>${msg.content}</div>
+                        <div class="message-time">${new Date(msg.createdAt).toLocaleString('ar-IQ')}</div>
+                    </div>
+                `).join('');
+                
+                container.scrollTop = container.scrollHeight;
+            } catch (error) {
+                console.error('Error loading conversation:', error);
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            
+            if (!content || !currentChatCenter) return;
+
+            try {
+                const response = await fetch('/api/communication/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        senderId: currentUserId,
+                        receiverId: currentChatCenter,
+                        content: content
+                    })
+                });
+
+                if (response.ok) {
+                    input.value = '';
+                    loadConversation();
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+            }
+        }
+
+        // Load FAQs
+        async function loadFAQs() {
+            try {
+                const response = await fetch('/api/communication/faq');
+                const data = await response.json();
+                
+                const container = document.getElementById('faqList');
+                if (data.faqs && data.faqs.length > 0) {
+                    container.innerHTML = data.faqs.map(faq => `
+                        <div class="faq-item" onclick="toggleFAQ(this)">
+                            <div class="faq-question">${faq.question}</div>
+                            <div class="faq-answer">${faq.answer}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">لا توجد أسئلة شائعة حالياً</p>';
+                }
+            } catch (error) {
+                console.error('Error loading FAQs:', error);
+            }
+        }
+
+        // Toggle FAQ
+        function toggleFAQ(element) {
+            element.classList.toggle('expanded');
+        }
+
+        // Search FAQs
+        async function searchFAQs() {
+            const query = document.getElementById('faqSearch').value;
+            if (query.length < 2) {
+                loadFAQs();
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/communication/faq/search?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                const container = document.getElementById('faqList');
+                if (data.faqs && data.faqs.length > 0) {
+                    container.innerHTML = data.faqs.map(faq => `
+                        <div class="faq-item" onclick="toggleFAQ(this)">
+                            <div class="faq-question">${faq.question}</div>
+                            <div class="faq-answer">${faq.answer}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">لا توجد نتائج</p>';
+                }
+            } catch (error) {
+                console.error('Error searching FAQs:', error);
+            }
+        }
+
+        // Load files
+        async function loadFiles() {
+            try {
+                const response = await fetch('/api/communication/files');
+                const data = await response.json();
+                
+                const container = document.getElementById('filesList');
+                if (data.files && data.files.length > 0) {
+                    container.innerHTML = data.files.map(file => `
+                        <div class="file-item">
+                            <div class="file-info">
+                                <div class="file-name">${file.originalName}</div>
+                                <div class="file-meta">
+                                    ${(file.fileSize / 1024).toFixed(2)} KB | 
+                                    ${file.category} | 
+                                    تم التحميل ${file.downloadCount} مرة
+                                </div>
+                            </div>
+                            <div class="file-actions">
+                                <button onclick="downloadFile('${file.id}')">تحميل</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">لا توجد ملفات حالياً</p>';
+                }
+            } catch (error) {
+                console.error('Error loading files:', error);
+            }
+        }
+
+        // Download file
+        function downloadFile(fileId) {
+            window.open(`/api/communication/files/${fileId}/download`, '_blank');
+        }
+
+        // Load initial content
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBulletins();
+        });
+    </script>
+</body>
+</html>
+

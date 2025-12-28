@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة الإحاطة اليومية - دائرة صحة كركوك</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Arial Unicode MS', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .welcome-header {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .welcome-header h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .welcome-header .date {
+            font-size: 18px;
+            color: #666;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-left: 5px solid #667eea;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .summary-card.critical {
+            border-left-color: #c53030;
+            background: #fff5f5;
+        }
+
+        .summary-card.warning {
+            border-left-color: #ed8936;
+            background: #fffaf0;
+        }
+
+        .summary-card.success {
+            border-left-color: #48bb78;
+            background: #f0fff4;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .card-icon {
+            font-size: 32px;
+        }
+
+        .card-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .card-value.critical {
+            color: #c53030;
+        }
+
+        .card-value.warning {
+            color: #ed8936;
+        }
+
+        .card-description {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .alerts-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .alerts-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .alert-item {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-right: 5px solid;
+        }
+
+        .alert-item.critical {
+            background: #fff5f5;
+            border-right-color: #c53030;
+        }
+
+        .alert-item.high {
+            background: #fffaf0;
+            border-right-color: #ed8936;
+        }
+
+        .alert-item.normal {
+            background: #f0f4ff;
+            border-right-color: #667eea;
+        }
+
+        .alert-message {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .alert-meta {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .reporting-gaps-list {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .reporting-gaps-list h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .gap-item {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .gap-item.critical {
+            background: #fff5f5;
+            border: 2px solid #c53030;
+        }
+
+        .gap-item.warning {
+            background: #fffaf0;
+            border: 2px solid #ed8936;
+        }
+
+        .gap-info {
+            flex: 1;
+        }
+
+        .gap-center-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .gap-details {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .gap-days {
+            font-size: 24px;
+            font-weight: 700;
+            color: #c53030;
+            margin-left: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .welcome-header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="welcome-header">
+            <h1>مرحباً، السيد المدير</h1>
+            <div class="date" id="currentDate"></div>
+        </div>
+
+        <div id="loading" class="loading">جاري تحميل البيانات...</div>
+
+        <div id="dashboardContent" style="display: none;">
+            <!-- Action Buttons -->
+            <div style="text-align: center; margin-bottom: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button onclick="generateWeeklyPdf()" style="
+                    padding: 15px 30px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+                    transition: transform 0.3s;
+                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    📄 توليد تقرير PDF أسبوعي رسمي
+                </button>
+                <button onclick="window.location.href='/settings/drive?userId=admin'" style="
+                    padding: 15px 30px;
+                    background: #48bb78;
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+                    transition: transform 0.3s;
+                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    ☁️ إعدادات Google Drive
+                </button>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="summary-card" id="pendingApprovalsCard" onclick="goToPosterReview()">
+                    <div class="card-header">
+                        <div class="card-title">البوسترات في الانتظار</div>
+                        <div class="card-icon">📋</div>
+                    </div>
+                    <div class="card-value" id="pendingApprovalsCount">0</div>
+                    <div class="card-description">بوستر في انتظار الموافقة</div>
+                </div>
+
+                <div class="summary-card" id="reportingGapsCard" onclick="showReportingGaps()">
+                    <div class="card-header">
+                        <div class="card-title">فجوات الإبلاغ</div>
+                        <div class="card-icon">⚠️</div>
+                    </div>
+                    <div class="card-value" id="reportingGapsCount">0</div>
+                    <div class="card-description">مركز لم يدخل بيانات</div>
+                </div>
+
+                <div class="summary-card" id="newMessagesCard" onclick="goToCommunicationCenter()">
+                    <div class="card-header">
+                        <div class="card-title">الرسائل الجديدة</div>
+                        <div class="card-icon">💬</div>
+                    </div>
+                    <div class="card-value" id="unreadMessagesCount">0</div>
+                    <div class="card-description">رسالة غير مقروءة</div>
+                </div>
+            </div>
+
+            <!-- Critical Alerts -->
+            <div class="alerts-section" id="alertsSection" style="display: none;">
+                <h2>🔔 تنبيهات حرجة</h2>
+                <div id="alertsList"></div>
+            </div>
+
+            <!-- Reporting Gaps Details -->
+            <div class="reporting-gaps-list" id="reportingGapsList" style="display: none;">
+                <h2>تفاصيل فجوات الإبلاغ</h2>
+                <p style="color: #666; margin-bottom: 20px;">المراكز التي لم تدخل بيانات اليوم أو أمس</p>
+                <div id="gapsDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set current date
+        document.getElementById('currentDate').textContent = 
+            new Date().toLocaleDateString('ar-IQ', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+
+        // Load daily briefing
+        async function loadDailyBriefing() {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('dashboardContent');
+
+            try {
+                const response = await fetch('/api/admin/daily-brief');
+                const data = await response.json();
+
+                // Update summary cards
+                updateSummaryCards(data);
+
+                // Update alerts
+                updateAlerts(data);
+
+                // Update reporting gaps
+                updateReportingGaps(data);
+
+                loading.style.display = 'none';
+                content.style.display = 'block';
+            } catch (error) {
+                console.error('Error loading briefing:', error);
+                loading.textContent = 'خطأ في تحميل البيانات: ' + error.message;
+            }
+        }
+
+        // Update summary cards
+        function updateSummaryCards(data) {
+            // Pending Approvals
+            const pendingCount = data.pendingPostersCount || 0;
+            document.getElementById('pendingApprovalsCount').textContent = pendingCount;
+            const pendingCard = document.getElementById('pendingApprovalsCard');
+            if (pendingCount > 0) {
+                pendingCard.classList.add('warning');
+                document.getElementById('pendingApprovalsCount').classList.add('warning');
+            }
+
+            // Reporting Gaps
+            const gapsCount = data.reportingGapsCount || 0;
+            document.getElementById('reportingGapsCount').textContent = gapsCount;
+            const gapsCard = document.getElementById('reportingGapsCard');
+            if (gapsCount > 0) {
+                gapsCard.classList.add('critical');
+                document.getElementById('reportingGapsCount').classList.add('critical');
+            }
+
+            // Unread Messages
+            const messagesCount = data.unreadMessagesCount || 0;
+            document.getElementById('unreadMessagesCount').textContent = messagesCount;
+            const messagesCard = document.getElementById('newMessagesCard');
+            if (messagesCount > 0) {
+                messagesCard.classList.add('warning');
+                document.getElementById('unreadMessagesCount').classList.add('warning');
+            }
+        }
+
+        // Update alerts
+        function updateAlerts(data) {
+            const alerts = data.criticalAlerts || [];
+            const alertsSection = document.getElementById('alertsSection');
+            const alertsList = document.getElementById('alertsList');
+
+            if (alerts.length > 0) {
+                alertsSection.style.display = 'block';
+                alertsList.innerHTML = alerts.map(alert => `
+                    <div class="alert-item ${alert.severity === 'CRITICAL' ? 'critical' : alert.severity === 'HIGH' ? 'high' : 'normal'}">
+                        <div class="alert-message">${alert.message}</div>
+                        <div class="alert-meta">نوع: ${alert.type} | الأولوية: ${alert.severity}</div>
+                    </div>
+                `).join('');
+            } else {
+                alertsSection.style.display = 'none';
+            }
+        }
+
+        // Update reporting gaps
+        function updateReportingGaps(data) {
+            const gaps = data.reportingGaps || [];
+            const gapsList = document.getElementById('reportingGapsList');
+            const gapsDetails = document.getElementById('gapsDetails');
+
+            if (gaps.length > 0) {
+                gapsList.style.display = 'block';
+                gapsDetails.innerHTML = gaps.map(gap => `
+                    <div class="gap-item ${gap.isCritical ? 'critical' : 'warning'}">
+                        <div class="gap-info">
+                            <div class="gap-center-name">${gap.centerName || gap.centerId}</div>
+                            <div class="gap-details">
+                                المدير: ${gap.managerName || 'غير محدد'} | 
+                                ${gap.daysWithoutData} يوم بدون بيانات
+                            </div>
+                        </div>
+                        <div class="gap-days">${gap.daysWithoutData}</div>
+                    </div>
+                `).join('');
+            } else {
+                gapsList.style.display = 'none';
+            }
+        }
+
+        // Navigation functions
+        function goToPosterReview() {
+            window.location.href = '/statistics/dashboard';
+        }
+
+        function showReportingGaps() {
+            document.getElementById('reportingGapsList').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function goToCommunicationCenter() {
+            window.location.href = '/communication';
+        }
+
+        // Get current user ID (should come from authentication)
+        const currentUserId = 'admin'; // TODO: Get from actual authentication
+
+        // Generate weekly PDF report
+        function generateWeeklyPdf() {
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 7);
+            const endDate = new Date();
+
+            const startDateStr = startDate.toISOString().split('T')[0];
+            const endDateStr = endDate.toISOString().split('T')[0];
+
+            const url = `/api/admin/report/weekly-pdf?startDate=${startDateStr}&endDate=${endDateStr}&userId=${currentUserId}`;
+            
+            // Show loading message
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = 'جاري التوليد...';
+            button.disabled = true;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('خطأ في توليد التقرير');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Sector1_Report_${endDateStr.replace(/-/g, '_')}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    
+                    // Show success message if uploaded to Drive
+                    showMessage('تم توليد التقرير بنجاح! إذا كان Google Drive مرتبطاً، سيتم رفعه تلقائياً.', 'success');
+                })
+                .catch(error => {
+                    console.error('Error generating PDF:', error);
+                    alert('خطأ في توليد التقرير: ' + error.message);
+                    button.textContent = originalText;
+                    button.disabled = false;
+                });
+        }
+
+        // Show message helper
+        function showMessage(message, type) {
+            // Create temporary message element
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                background: ${type === 'success' ? '#e6ffed' : '#fff5f5'};
+                color: ${type === 'success' ? '#22543d' : '#742a2a'};
+                border-radius: 8px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                z-index: 1000;
+                font-weight: 600;
+            `;
+            messageDiv.textContent = message;
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDailyBriefing();
+            // Refresh every 5 minutes
+            setInterval(loadDailyBriefing, 300000);
+        });
+    </script>
+</body>
+</html>
+
