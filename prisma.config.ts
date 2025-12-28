@@ -3,7 +3,7 @@
 
 export default {
   datasource: { 
-    url: 'postgresql://postgres:UEHSVrYEziEGsHqTbWjxfLFbTgzwYUMa@metro.proxy.rlwy.net:58513/railway' 
+    url: process.env.DATABASE_URL 
   },
 }
 
