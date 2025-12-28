@@ -1,16 +1,21 @@
+# Nixpacks configuration for Railway - Java Backend Only
+# This file configures Railway to build ONLY the Java backend
+# Frontend (Next.js) should be deployed separately on Vercel
+
 [phases.setup]
-nixPkgs = ["nodejs_20"]
+# Install Java 20 JDK and Maven build tool
+nixPkgs = ["jdk20", "maven"]
 
 [phases.install]
-cmds = ["npm install"]
+# Download all dependencies (cached for faster rebuilds)
+cmds = ["cd java-backend && mvn clean install -DskipTests"]
 
 [phases.build]
-env = { SKIP_ENV_VALIDATION = "1" }
-cmds = [
-  "SKIP_ENV_VALIDATION=1 npx prisma generate",
-  "npm run build"
-]
+# Build the application JAR file
+cmds = ["cd java-backend && mvn package -DskipTests"]
 
 [start]
-cmd = "npx prisma migrate deploy || echo 'Migration failed, continuing...' && npm start"
+# Start command: Run the JAR file
+# Note: Railway sets PORT environment variable automatically
+cmd = "cd java-backend && java -jar target/health-poster-ai-platform-1.0.0.jar"
 

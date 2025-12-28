@@ -1,0 +1,34 @@
+# Railway Ignore File
+# This file tells Railway to ignore these files/directories during build
+# Railway should only build the java-backend, not the Next.js frontend
+
+# Frontend files (Next.js)
+/app
+/components
+/lib
+/middleware.ts
+/next.config.js
+/next-env.d.ts
+/package.json
+/package-lock.json
+/postcss.config.js
+/prisma
+/prisma.config.ts
+/public
+/scripts
+/tailwind.config.js
+/tsconfig.json
+/tsconfig.tsbuildinfo
+/types
+/node_modules
+/.next
+/out
+
+# Frontend documentation
+/RAILWAY_QUICK_START_AR.md
+/RAILWAY_SETUP.md
+/SETUP.md
+/README.md
+
+# Keep only java-backend for Railway deployment
+

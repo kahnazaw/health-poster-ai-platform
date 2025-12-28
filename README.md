@@ -1,325 +1,268 @@
+# Health Poster AI Platform
 # منصة بوسترات التوعية الصحية
 
 منصة مؤسسية رسمية لتوليد بوسترات التوعية الصحية بالذكاء الاصطناعي
 
 **الجهة المالكة:** دائرة صحة كركوك – قطاع كركوك الأول – وحدة تعزيز الصحة
 
-## المميزات
+## 🏗️ Architecture Overview
 
-### الأمان والصلاحيات
-- ✅ نظام تسجيل دخول آمن مع NextAuth.js
-- ✅ **نظام صلاحيات متقدم (RBAC)** مع 5 أدوار:
-  - SUPER_ADMIN: صلاحيات كاملة
-  - ADMIN: إدارة المستخدمين والمحتوى
-  - CONTENT_MANAGER: إدارة المحتوى والمراجعة
-  - REVIEWER: مراجعة وموافقة المحتوى
-  - USER: إنشاء المحتوى فقط
-- ✅ حماية المسارات حسب الدور
-- ✅ إنشاء تلقائي لحساب المدير عند بدء التشغيل
+This repository contains **two separate applications** that should be deployed independently:
 
-### توليد البوسترات
-- ✅ توليد محتوى توعية صحية احترافي
-- ✅ **دعم الذكاء الاصطناعي (OpenAI)** لتوليد محتوى ذكي ومخصص
-- ✅ **مكتبة قوالب** قابلة لإعادة الاستخدام
-- ✅ **نظام الموافقة والمراجعة** (DRAFT → UNDER_REVIEW → APPROVED/REJECTED)
-- ✅ **سجل الحالة** (Audit Trail) لتتبع التغييرات
-- ✅ تحميل الصور عالية الجودة (PNG)
-- ✅ تحميل PDF جاهز للطباعة
-- ✅ طباعة مباشرة
-- ✅ معاينة مباشرة قبل الحفظ
+1. **Backend (Java Spring Boot)** - REST API service
+   - Location: `java-backend/`
+   - Deploy on: **Railway**
+   - Port: Uses `PORT` environment variable (Railway sets this automatically)
 
-### الذكاء الاصطناعي المتقدم
-- ✅ توليد محتوى مخصص حسب الجمهور والأسلوب
-- ✅ تبسيط اللغة الطبية للجمهور العام
-- ✅ تلخيص المحتوى الطويل
-- ✅ تحويل إلى نقاط رئيسية
-- ✅ إنشاء نصوص لوسائل التواصل الاجتماعي
-- ✅ التحقق من جودة المحتوى (الطول، الأسلوب، الملاءمة الثقافية)
+2. **Frontend (Next.js)** - Web application
+   - Location: Root directory (`/app`, `/components`, etc.)
+   - Deploy on: **Vercel** (recommended) or any Node.js hosting
+   - Port: 3000 (default)
 
-### التحليلات والتقارير
-- ✅ **لوحة تحليلات شاملة**:
-  - إحصائيات البوسترات (إجمالي، معتمد، قيد المراجعة)
-  - عدد التحميلات والطباعة
-  - استخدام الذكاء الاصطناعي
-  - نشاط المستخدمين
-- ✅ تقارير قابلة للتصدير
+### Why Separate?
 
-### واجهة المستخدم
-- ✅ تصميم عصري ومؤسسي بألوان طبية هادئة
-- ✅ دعم RTL كامل للغة العربية
-- ✅ **دعم متعدد اللغات (i18n)** - العربية، الكردية، التركية، الإنجليزية
-- ✅ متجاوب مع جميع الأجهزة (Desktop / Mobile)
-- ✅ لوحة تحكم إدارية لإدارة المستخدمين
-- ✅ لوحة تحكم للمستخدمين لعرض وإدارة بوستراتهم
-- ✅ **لوحة تحليلات مرئية** مع رسوم بيانية
+- **Backend**: Provides REST APIs for health statistics, poster generation, and data management
+- **Frontend**: Provides user interface and connects to backend APIs
+- **Database**: Shared PostgreSQL database (configured separately)
 
-### التصدير والتوزيع
-- ✅ **تصدير متعدد القنوات:**
-  - PNG عالي الجودة
-  - PDF (A4 / A3)
-  - Instagram (مربع)
-  - WhatsApp (عمودي)
-  - Facebook (أفقي)
-- ✅ **QR Code** لكل بوستر للمشاركة العامة
-- ✅ صفحات عرض عامة للبوسترات المعتمدة
-- ✅ تتبع التحميلات والطباعة
+## 📋 Prerequisites
 
-### إدارة المنظمات
-- ✅ **دعم المنظمات المتعددة:**
-  - إنشاء وإدارة المنظمات
-  - عزل البيانات حسب المنظمة
-  - قوالب مشتركة أو خاصة
-  - إدارة المستخدمين حسب المنظمة
+### For Backend (Java)
+- Java 20 JDK
+- Maven 3.8+
+- PostgreSQL database
 
-## التقنيات المستخدمة
+### For Frontend (Next.js)
+- Node.js 20.x
+- npm or yarn
+- PostgreSQL database (shared with backend)
 
-### Frontend
-- **Next.js 14** (App Router) - إطار عمل React
-- **TypeScript** - للسلامة النوعية
-- **Tailwind CSS** - للتصميم
-- **NextAuth.js** - للمصادقة
+## 🚀 Quick Start
 
-### Backend
-- **Next.js API Routes** - واجهات برمجية
-- **Prisma ORM** - إدارة قاعدة البيانات
-- **PostgreSQL** - قاعدة البيانات
-- **bcryptjs** - تشفير كلمات المرور
-
-### AI & Export
-- **OpenAI API** (اختياري) - توليد المحتوى بالذكاء الاصطناعي
-- **html2canvas** - تحويل HTML إلى صور
-- **jsPDF** - توليد ملفات PDF
-
-## الإعداد الأولي
-
-### إنشاء حساب المدير الأول
-
-عند أول تشغيل للمنصة (قبل وجود أي مستخدمين)، يمكنك الوصول إلى صفحة الإعداد الأولي:
-
-1. **افتح المتصفح وانتقل إلى:** `/setup`
-2. **املأ النموذج:**
-   - اسم المدير
-   - البريد الإلكتروني
-   - كلمة المرور (يجب أن تكون قوية)
-   - تأكيد كلمة المرور
-3. **انقر على "إنشاء حساب المدير"**
-
-**ملاحظات مهمة:**
-- هذه العملية تتم **مرة واحدة فقط**
-- بعد إنشاء أول مستخدم، لن تكون صفحة `/setup` متاحة
-- كلمة المرور يجب أن تحتوي على:
-  - 8 أحرف على الأقل
-  - حرف كبير واحد على الأقل
-  - حرف صغير واحد على الأقل
-  - رقم واحد على الأقل
-  - رمز خاص واحد على الأقل
-
-بعد إنشاء الحساب، سيتم إعادة توجيهك إلى صفحة تسجيل الدخول.
-
-## التثبيت والتشغيل
-
-### المتطلبات
-- Node.js 18 أو أحدث
-- PostgreSQL (للإنتاج) أو SQLite (للتطوير)
-- npm أو yarn
-
-### 1. تثبيت الحزم
+### Backend Setup (Java Spring Boot)
 
 ```bash
+cd java-backend
+
+# Install dependencies and build
+mvn clean install
+
+# Run locally
+mvn spring-boot:run
+```
+
+The backend will run on `http://localhost:8080` (or the port specified by `PORT` env var).
+
+### Frontend Setup (Next.js)
+
+```bash
+# Install dependencies
 npm install
-```
 
-### 2. إعداد متغيرات البيئة
+# Copy environment variables
+cp env.local.example .env.local
 
-أنشئ ملف `.env.local`:
+# Edit .env.local and set:
+# - DATABASE_URL (PostgreSQL connection string)
+# - NEXTAUTH_URL (http://localhost:3000 for local)
+# - NEXTAUTH_SECRET (generate a secure random string)
+# - NEXT_PUBLIC_API_URL (http://localhost:8080 for local)
 
-```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/health_poster"
-
-# NextAuth
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key-here"
-
-# Admin User (Auto-created on startup in production)
-ADMIN_EMAIL="admin@health.gov.iq"
-ADMIN_PASSWORD="SecurePassword123!"
-
-# OpenAI (Optional - for AI content generation)
-OPENAI_API_KEY="sk-..."
-```
-
-### 3. إعداد قاعدة البيانات
-
-```bash
-# توليد Prisma Client
+# Generate Prisma client
 npm run db:generate
 
-# تطبيق Migrations
+# Run database migrations
 npm run db:migrate
 
-# أو للبيئة المحلية
-npm run db:push
-```
-
-### 4. تشغيل المشروع
-
-```bash
-# وضع التطوير
+# Start development server
 npm run dev
-
-# بناء للإنتاج
-npm run build
-npm start
 ```
 
-المشروع سيعمل على: `http://localhost:3000`
+The frontend will run on `http://localhost:3000`.
 
-## هيكل المشروع
+## 🚢 Deployment
 
-```
-health-poster-ai-platform/
-├── app/                    # صفحات Next.js (App Router)
-│   ├── api/               # API Routes
-│   │   ├── auth/          # NextAuth endpoints
-│   │   ├── users/         # إدارة المستخدمين
-│   │   └── posters/       # إدارة البوسترات
-│   ├── dashboard/         # لوحات التحكم
-│   │   ├── admin/        # لوحة التحكم الإدارية
-│   │   └── user/         # لوحة تحكم المستخدم
-│   ├── login/             # صفحة تسجيل الدخول
-│   ├── posters/           # صفحات البوسترات
-│   └── layout.tsx         # التخطيط الرئيسي
-├── components/            # المكونات القابلة لإعادة الاستخدام
-│   ├── Navbar.tsx        # شريط التنقل
-│   ├── PosterGenerator.tsx # مولد البوسترات
-│   └── UserManagement.tsx  # إدارة المستخدمين
-├── lib/                   # المكتبات والمساعدات
-│   ├── auth.ts           # إعدادات NextAuth
-│   ├── prisma.ts         # Prisma Client
-│   └── ai.ts             # خدمة الذكاء الاصطناعي
-├── prisma/                # مخطط قاعدة البيانات
-│   ├── schema.prisma     # مخطط Prisma
-│   └── migrations/       # Migrations
-├── scripts/               # سكربتات مساعدة
-│   ├── ensure-admin.ts   # إنشاء المدير تلقائياً
-│   └── init-db.ts        # تهيئة قاعدة البيانات
-└── types/                 # تعريفات TypeScript
-```
+### Backend Deployment on Railway
 
-## الصلاحيات
+1. **Connect Repository to Railway**
+   - Go to Railway dashboard
+   - Click "New Project" → "Deploy from GitHub repo"
+   - Select this repository
 
-### Admin (مدير)
-- إضافة مستخدمين جدد
-- تعديل بيانات المستخدمين
-- تغيير صلاحيات المستخدمين (USER ↔ ADMIN)
-- حذف المستخدمين
-- توليد البوسترات
-- عرض جميع البوسترات
+2. **Configure Railway Service**
+   - Railway will detect `railway.json` and `nixpacks.toml` in root
+   - These files are configured to build only `java-backend/`
+   - **Important**: Railway should build from root, but the build commands will `cd` into `java-backend/`
 
-### User (مستخدم)
-- توليد البوسترات
-- عرض وإدارة بوستراته الخاصة
-- تحميل وطباعة البوسترات
+3. **Add PostgreSQL Database**
+   - In Railway dashboard, add a PostgreSQL service
+   - Railway will automatically set `DATABASE_URL` environment variable
 
-## استخدام API
+4. **Set Environment Variables**
+   ```
+   PORT=8080  # Railway sets this automatically, but you can override
+   DATABASE_URL=<from PostgreSQL service>
+   GEMINI_API_KEY=<your-gemini-api-key>
+   ```
 
-### توليد بوستر
+5. **Deploy**
+   - Railway will automatically:
+     - Install Java 20 and Maven
+     - Run `mvn clean package -DskipTests`
+     - Start the JAR file with `java -jar target/health-poster-ai-platform-1.0.0.jar`
 
-```bash
-POST /api/posters/generate
-Content-Type: application/json
+6. **Verify Deployment**
+   - Check Railway logs for: `✅ Successfully seeded 66 health topics into database`
+   - Test API endpoint: `https://your-backend.railway.app/api/statistics/categories`
 
-{
-  "topic": "نظافة الأسنان",
-  "useAI": true,              # اختياري - استخدام الذكاء الاصطناعي
-  "targetAudience": "عامة",   # اختياري - الجمهور المستهدف
-  "tone": "formal",          # اختياري - formal | friendly
-  "length": "medium"         # اختياري - short | medium | long
-}
-```
+### Frontend Deployment on Vercel
 
-### إدارة المستخدمين (Admin فقط)
+1. **Connect Repository to Vercel**
+   - Go to Vercel dashboard
+   - Click "Add New Project"
+   - Import this GitHub repository
 
-```bash
-# الحصول على جميع المستخدمين
-GET /api/users
+2. **Configure Build Settings**
+   - Framework Preset: **Next.js**
+   - Root Directory: `/` (root)
+   - Build Command: `npm run build`
+   - Output Directory: `.next`
 
-# إضافة مستخدم جديد
-POST /api/users
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "name": "اسم المستخدم",
-  "role": "USER"
-}
+3. **Set Environment Variables**
+   ```
+   DATABASE_URL=<your-postgresql-connection-string>
+   NEXTAUTH_URL=https://your-frontend.vercel.app
+   NEXTAUTH_SECRET=<generate-secure-random-string>
+   NEXT_PUBLIC_API_URL=https://your-backend.railway.app
+   API_URL=https://your-backend.railway.app
+   ```
 
-# تعديل مستخدم
-PATCH /api/users/[id]
-{
-  "name": "اسم جديد",
-  "role": "ADMIN"
-}
+4. **Deploy**
+   - Vercel will automatically build and deploy
+   - The frontend will connect to your Railway backend
 
-# حذف مستخدم
-DELETE /api/users/[id]
-```
+### Alternative: Frontend on Railway
 
-## الذكاء الاصطناعي
+If you prefer to deploy frontend on Railway (not recommended, but possible):
 
-### إعداد OpenAI
+1. Create a **separate Railway service** for frontend
+2. Set Root Directory to `/` (root)
+3. Use Node.js buildpack
+4. Set start command: `npm start`
+5. Set environment variables as above
 
-1. احصل على API Key من [OpenAI](https://platform.openai.com/)
-2. أضف `OPENAI_API_KEY` إلى متغيرات البيئة
-3. عند تفعيل خيار "استخدام الذكاء الاصطناعي" في واجهة التوليد، سيتم استخدام OpenAI لتوليد المحتوى
+**Note**: Railway is optimized for backend services. Vercel is better for Next.js frontends.
 
-### بدون OpenAI
+## 🔧 Configuration Files
 
-إذا لم يتم إعداد OpenAI API Key، سيتم استخدام القوالب الجاهزة تلقائياً.
+### Root Directory Files (for Railway Backend)
 
-## النشر على Railway
+- `railway.json` - Railway deployment configuration (builds java-backend)
+- `nixpacks.toml` - Nixpacks build configuration (builds java-backend)
+- `.railwayignore` - Excludes frontend files from Railway build
 
-### المتطلبات
-- حساب Railway
-- قاعدة بيانات PostgreSQL (Railway يوفرها)
-- متغيرات البيئة المطلوبة
+### Backend Configuration
 
-### خطوات النشر
+- `java-backend/railway.json` - Alternative Railway config (if deploying from java-backend directory)
+- `java-backend/nixpacks.toml` - Alternative Nixpacks config
+- `java-backend/src/main/resources/application.properties` - Spring Boot configuration
 
-1. اربط مستودع GitHub مع Railway
-2. أضف متغيرات البيئة:
-   - `DATABASE_URL` (يتم إنشاؤه تلقائياً عند إضافة PostgreSQL)
-   - `NEXTAUTH_URL` (رابط التطبيق على Railway)
-   - `NEXTAUTH_SECRET` (مفتاح عشوائي آمن)
-   - `ADMIN_EMAIL` و `ADMIN_PASSWORD`
-   - `OPENAI_API_KEY` (اختياري)
+### Frontend Configuration
 
-3. Railway سيقوم تلقائياً بـ:
-   - تثبيت الحزم
-   - توليد Prisma Client
-   - تطبيق Migrations
-   - تشغيل التطبيق
+- `next.config.js` - Next.js configuration
+- `env.local.example` - Environment variables template
+- `.env.local` - Local environment variables (not committed)
 
-## الأمان
+## 📡 API Endpoints
 
-- كلمات المرور مشفرة باستخدام bcrypt
-- جلسات آمنة مع NextAuth.js
-- حماية CSRF مدمجة
-- لا يتم تسجيل بيانات حساسة في السجلات
-- Prisma Client يستخدم Binary Engine متوافق مع Railway
+The backend exposes REST APIs under `/api/*`:
 
-## ملاحظات مهمة
+- `GET /api/statistics/categories` - Get health categories
+- `GET /api/statistics/categories-topics` - Get all categories with topics
+- `POST /api/statistics/daily` - Submit daily statistics
+- `GET /api/posters/{id}` - Get poster details
+- `POST /api/posters/generate` - Generate new poster
+- And more... (see `java-backend/src/main/java/com/kirkukhealth/poster/controller/`)
 
-1. **الأمان:** تأكد من تغيير `NEXTAUTH_SECRET` بقيمة عشوائية آمنة
-2. **قاعدة البيانات:** يستخدم PostgreSQL في الإنتاج
-3. **الذكاء الاصطناعي:** اختياري - يعمل التطبيق بدون OpenAI
-4. **الطباعة:** البوسترات مصممة بحجم A4 عمودي
-5. **المدير التلقائي:** يتم إنشاء حساب المدير تلقائياً في الإنتاج من متغيرات البيئة
+## 🗄️ Database
 
-## الترخيص
+Both frontend and backend share the same PostgreSQL database:
 
-هذا المشروع مملوك لدائرة صحة كركوك – قطاع كركوك الأول – وحدة تعزيز الصحة
+- **Backend**: Uses JPA/Hibernate to manage health statistics, posters, etc.
+- **Frontend**: Uses Prisma to manage users, authentication, etc.
 
-## الدعم
+**Important**: Ensure both services use the same `DATABASE_URL`.
 
-للأسئلة والدعم الفني، يرجى التواصل مع فريق التطوير.
+## 🔐 Security
+
+- Backend CORS is configured to allow all origins (configure for production)
+- Frontend uses NextAuth.js for authentication
+- Passwords are hashed with bcrypt
+- API endpoints require authentication (via NextAuth session)
+
+## 🐛 Troubleshooting
+
+### Backend 404 on Railway
+
+If you see "Whitelabel Error Page" on Railway:
+
+1. Check that Railway is building from root directory
+2. Verify `railway.json` has correct build commands with `cd java-backend`
+3. Check Railway logs for build errors
+4. Verify `PORT` environment variable is set (Railway sets this automatically)
+
+### Frontend Can't Connect to Backend
+
+1. Verify `NEXT_PUBLIC_API_URL` is set correctly
+2. Check CORS configuration in backend
+3. Ensure backend is running and accessible
+4. Check browser console for CORS errors
+
+### Database Connection Issues
+
+1. Verify `DATABASE_URL` is set correctly in both services
+2. Check PostgreSQL service is running
+3. Verify connection string format: `postgresql://user:password@host:port/database`
+
+## 📝 Development
+
+### Running Both Services Locally
+
+1. **Terminal 1 - Backend:**
+   ```bash
+   cd java-backend
+   mvn spring-boot:run
+   ```
+
+2. **Terminal 2 - Frontend:**
+   ```bash
+   npm run dev
+   ```
+
+3. **Access:**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8080
+
+### Database Migrations
+
+**Backend (Java):**
+- Uses Flyway migrations in `java-backend/src/main/resources/db/migration/`
+- Automatically runs on startup with `spring.jpa.hibernate.ddl-auto=update`
+
+**Frontend (Next.js):**
+- Uses Prisma migrations in `prisma/migrations/`
+- Run manually: `npm run db:migrate`
+
+## 📚 Additional Documentation
+
+- `java-backend/README.md` - Backend-specific documentation
+- `java-backend/QUICK_START.md` - Quick start guide for backend
+- `SETUP.md` - Detailed setup instructions
+
+## 📄 License
+
+This project is owned by دائرة صحة كركوك – قطاع كركوك الأول – وحدة تعزيز الصحة
+
+## 🆘 Support
+
+For questions and technical support, please contact the development team.

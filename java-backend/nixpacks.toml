@@ -22,17 +22,17 @@ nixPkgs = ["jdk20", "maven"]
 [phases.install]
 # Download all dependencies (cached for faster rebuilds)
 # تحميل جميع التبعيات (مخزنة مؤقتاً لإعادة بناء أسرع)
-cmds = ["mvn clean install -DskipTests"]
+cmds = ["cd java-backend && mvn clean install -DskipTests"]
 
 [phases.build]
 # Build the application JAR file
 # بناء ملف JAR للتطبيق
-cmds = ["mvn package -DskipTests"]
+cmds = ["cd java-backend && mvn package -DskipTests"]
 
 [start]
 # Start command: Run the JAR file
 # أمر التشغيل: تشغيل ملف JAR
 # Note: Railway sets PORT environment variable automatically
 # ملاحظة: Railway يضبط متغير البيئة PORT تلقائياً
-cmd = "java -jar target/health-poster-ai-platform-1.0.0.jar"
+cmd = "cd java-backend && java -jar target/health-poster-ai-platform-1.0.0.jar"
 
