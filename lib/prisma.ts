@@ -88,10 +88,10 @@ const originalConnect = prisma.$connect.bind(prisma)
 prisma.$connect = async function() {
   try {
     validateDatabaseUrl()
-    // Add timeout for connection attempts (30 seconds)
+    // Add timeout for connection attempts (20 seconds to prevent P1001 errors)
     const connectPromise = originalConnect()
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Database connection timeout after 30s')), 30000)
+      setTimeout(() => reject(new Error('Database connection timeout after 20s')), 20000)
     )
     return await Promise.race([connectPromise, timeoutPromise])
   } catch (error: any) {

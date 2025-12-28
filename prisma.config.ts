@@ -2,8 +2,8 @@
 // This file provides DATABASE_URL for Prisma Migrate and db push commands
 
 export default {
-  datasource: {
-    url: process.env.DATABASE_URL,
+  datasource: { 
+    url: 'postgresql://postgres:UEHSVrYEziEGsHqTbWjxfLFbTgzwYUMa@metro.proxy.rlwy.net:58513/railway' 
   },
 }
 
