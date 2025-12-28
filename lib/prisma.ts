@@ -44,12 +44,25 @@ function validateDatabaseUrl() {
 // Create Prisma client - use adapter for Prisma 7.2.0
 // Validation will happen on first actual database operation via $connect()
 // Connection pooling: url = pooled connection, directUrl = direct connection (for migrations)
+
+// CRITICAL: Ensure we're using DATABASE_URL from process.env, not a hardcoded value
+const actualDatabaseUrl = process.env.DATABASE_URL
+console.log('🔍 Prisma Client Initialization:')
+console.log('  - DATABASE_URL from process.env:', actualDatabaseUrl ? 'SET' : 'NOT SET')
+if (actualDatabaseUrl) {
+  // Log connection info without exposing password
+  const dbInfo = actualDatabaseUrl.replace(/:[^:@]+@/, ':****@')
+  console.log('  - Connection string:', dbInfo.substring(0, 50) + '...')
+  console.log('  - Is PostgreSQL:', dbInfo.includes('postgres'))
+}
+
 let adapter: Pool | undefined
-if (databaseUrl && !databaseUrl.includes('placeholder')) {
+if (actualDatabaseUrl && !actualDatabaseUrl.includes('placeholder')) {
   try {
-    const pgPool = new PgPool({ connectionString: databaseUrl })
+    // Use DATABASE_URL directly from process.env - no fallback
+    const pgPool = new PgPool({ connectionString: actualDatabaseUrl })
     adapter = new Pool(pgPool)
-    console.log('✅ Prisma adapter initialized with DATABASE_URL')
+    console.log('✅ Prisma adapter initialized with DATABASE_URL from process.env')
   } catch (adapterError) {
     console.error('❌ Failed to create Prisma adapter:', adapterError)
     // Continue without adapter - Prisma will use connection string directly
@@ -57,6 +70,9 @@ if (databaseUrl && !databaseUrl.includes('placeholder')) {
 } else {
   console.warn('⚠️ DATABASE_URL not set or contains placeholder - adapter not initialized')
   console.warn('⚠️ Prisma will need DATABASE_URL at runtime')
+  if (!actualDatabaseUrl) {
+    console.error('❌ CRITICAL: DATABASE_URL is not set in process.env!')
+  }
 }
 
 export const prisma =

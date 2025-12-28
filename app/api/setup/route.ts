@@ -19,23 +19,88 @@ const setupSchema = z.object({
  */
 export async function POST(req: NextRequest) {
   try {
-    // Verify database connection first
+    // Verify DATABASE_URL is set and not a placeholder
     console.log('🔌 Checking database connection...')
-    console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET')
+    const dbUrl = process.env.DATABASE_URL
+    console.log('DATABASE_URL:', dbUrl ? 'SET' : 'NOT SET')
+    
+    if (!dbUrl || dbUrl.includes('placeholder')) {
+      const errorMsg = 'DATABASE_URL is not set or contains placeholder'
+      console.error('❌', errorMsg)
+      return NextResponse.json(
+        { 
+          error: 'خطأ في إعدادات قاعدة البيانات',
+          details: errorMsg,
+          debug: { DATABASE_URL: dbUrl ? 'SET (placeholder)' : 'NOT SET' }
+        },
+        { status: 500 }
+      )
+    }
+    
+    // Verify Prisma is using DATABASE_URL from environment
+    console.log('🔍 Verifying Prisma client configuration...')
+    console.log('Using DATABASE_URL from process.env:', !!process.env.DATABASE_URL)
+    
+    // Check if User table exists before trying to query it
+    console.log('📋 Checking if User table exists...')
+    try {
+      // Try to query the User table - if it doesn't exist, this will fail
+      await prisma.$queryRaw`SELECT 1 FROM "User" LIMIT 1`
+      console.log('✅ User table exists')
+    } catch (tableError: any) {
+      console.error('❌ User table check failed:', tableError)
+      // Check if it's a "relation does not exist" error
+      if (tableError?.code === '42P01' || tableError?.message?.includes('does not exist')) {
+        return NextResponse.json(
+          { 
+            error: 'Database Tables Missing',
+            details: 'The User table does not exist. Please run database migrations first.',
+            debug: { errorCode: tableError?.code, errorMessage: tableError?.message }
+          },
+          { status: 500 }
+        )
+      }
+      // If it's a connection error, re-throw it
+      throw tableError
+    }
     
     try {
       await prisma.$connect()
       console.log('✅ Database connection successful')
-    } catch (connectError) {
+    } catch (connectError: any) {
       console.error('❌ Database connection failed:', connectError)
-      throw new Error('Database connection failed. Please check DATABASE_URL environment variable.')
+      return NextResponse.json(
+        { 
+          error: 'خطأ في الاتصال بقاعدة البيانات',
+          details: connectError?.message || 'Database connection failed',
+          debug: { 
+            errorCode: connectError?.code,
+            errorName: connectError?.name,
+            DATABASE_URL: dbUrl ? 'SET' : 'NOT SET'
+          }
+        },
+        { status: 500 }
+      )
     }
 
     // EMERGENCY: Temporarily bypass user count check for admin reset
     // Check if any users already exist
     console.log('📊 Checking user count...')
-    const userCount = await prisma.user.count()
-    console.log(`📊 User count: ${userCount}`)
+    let userCount = 0
+    try {
+      userCount = await prisma.user.count()
+      console.log(`📊 User count: ${userCount}`)
+    } catch (countError: any) {
+      console.error('❌ Failed to count users:', countError)
+      return NextResponse.json(
+        { 
+          error: 'خطأ في الوصول إلى قاعدة البيانات',
+          details: countError?.message || 'Failed to query users table',
+          debug: { errorCode: countError?.code, errorName: countError?.name }
+        },
+        { status: 500 }
+      )
+    }
 
     // EMERGENCY BYPASS: Allow creating admin even if users exist
     // This will create a new admin or update existing one
@@ -189,10 +254,24 @@ export async function POST(req: NextRequest) {
       console.error('Error stack:', error.stack)
     }
 
+    // Always include error details in response for debugging
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorName = error instanceof Error ? error.name : 'UnknownError'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
+    // Extract Prisma error code if available
+    const prismaCode = (error && typeof error === 'object' && 'code' in error) ? (error as any).code : undefined
+    
     return NextResponse.json(
       { 
         error: 'حدث خطأ أثناء إنشاء الحساب',
-        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
+        details: errorMessage,
+        debug: {
+          errorName,
+          errorCode: prismaCode,
+          DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT SET',
+          stack: process.env.NODE_ENV === 'development' ? errorStack : undefined
+        }
       },
       { status: 500 }
     )

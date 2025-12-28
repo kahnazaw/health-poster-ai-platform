@@ -97,4 +97,6 @@ export default withAuth(
 
 export const config = {
   matcher: ['/dashboard/:path*', '/login', '/setup', '/posters/:path*'],
+  // Explicitly exclude API routes from middleware
+  // API routes should not be blocked by middleware
 }
